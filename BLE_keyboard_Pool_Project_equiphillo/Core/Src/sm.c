@@ -104,7 +104,6 @@ void Connection_StateMachine(void)
             (ADV_INTERVAL_MAX_MS * 1000) / 625,
             PUBLIC_ADDR,
             0x00);
-        //ret = aci_gap_start_limited_discovery_proc(SCAN_P, SCAN_L, PUBLIC_ADDR, 0x00);
         if (ret != BLE_STATUS_SUCCESS)
         {
             BLUENRG_PRINTF("aci_gap_start_limited_discovery_proc() failed: %02X\r\n", ret);
@@ -113,7 +112,7 @@ void Connection_StateMachine(void)
         else
         {
             BLUENRG_PRINTF("aci_gap_start_limited_discovery_proc OK\r\n");
-            discovery.startTime = HAL_GetTick(); /**************************TODO**********/
+            discovery.startTime = HAL_GetTick();
             discovery.check_disc_proc_timer = TRUE;
             discovery.check_disc_mode_timer = FALSE;
             discovery.device_state = WAIT_TIMER_EXPIRED;
@@ -122,7 +121,6 @@ void Connection_StateMachine(void)
     break;/* end case (START_DISCOVERY_PROC) */
     case (WAIT_TIMER_EXPIRED):
     {
-     //   BLUENRG_PRINTF("INSIDE WAIT_TIMER_EXPIRED\r\n");
         /* Verify if startTime check has to be done  since discovery procedure is ongoing */
         if (discovery.check_disc_proc_timer == TRUE)
         {
