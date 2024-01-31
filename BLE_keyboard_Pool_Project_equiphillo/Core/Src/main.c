@@ -22,8 +22,11 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "app_bluenrg.h"
+//#include "app_bluenrg.h"
+#include "Init.h"
 #include "stdio.h"
+#include "sm.h"
+
 
 /* USER CODE END Includes */
 
@@ -98,8 +101,8 @@ int main(void)
   MX_GPIO_Init();
   MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
-  bluenrg_init();
-
+  //bluenrg_init();
+  Init();
 
   /*
    * Enable BLE
@@ -111,7 +114,7 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  printf("*********************************************************************************************\r\n");
+  printf("INITIALIZATIONS COMPLETE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\r\n");
   while (1)
   {
     /* USER CODE END WHILE */
@@ -123,7 +126,8 @@ int main(void)
 	     *
 	     * */
 
-	  bluenrg_process();
+	  //bluenrg_process();
+	  BLE_Process();
   }
   /* USER CODE END 3 */
 }

@@ -8,7 +8,7 @@
 #include "ble_types.h"
 #include "keyboard.h"
 #include "services.h"
-#include "app_bluenrg.h"
+
 
 extern uint16_t hid_service_handle;
 extern uint16_t input_report_char_handle;
@@ -60,7 +60,7 @@ void processInputData(uint8_t* data_buffer, uint8_t Nb_bytes)
   uint8_t ret, i, upperCase, nmbTimes, keys[8]={0,0,0,0,0,0,0,0};
   //Check if device is connected, bonded and paired
   uint8_t offset=2;
-  if (hidDeviceStatus() & HID_DEVICE_READY_TO_NOTIFY) {
+  if (HID_DEVICE_READY_TO_NOTIFY) {
     for (i=0; i<Nb_bytes; i++) {
       keys[offset] = hid_keyboard_map(data_buffer[i], &upperCase);
       if (upperCase)
@@ -79,12 +79,6 @@ void processInputData(uint8_t* data_buffer, uint8_t Nb_bytes)
       } while ((ret != BLE_STATUS_SUCCESS) && (nmbTimes < 200));
     }
   }
-}
-
-
-//TODO IMPLEMENT??????
-uint8_t hidDeviceStatus(void){
-    return HID_DEVICE_READY_TO_NOTIFY;
 }
 
 

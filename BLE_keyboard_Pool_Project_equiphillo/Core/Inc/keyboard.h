@@ -41,7 +41,7 @@ void processInputData(uint8_t* data_buffer, uint8_t Nb_bytes);
 uint8_t hidDeviceStatus(void);
 uint8_t hid_keyboard_map(uint8_t charac, uint8_t *upperCase);
 uint8_t hidSendReport(uint8_t id, uint8_t type, uint8_t reportLen, uint8_t *reportData);
-
+void processInputData(uint8_t* data_buffer, uint8_t Nb_bytes);
 
 
 #endif /* INC_KEYBOARD_H_ */

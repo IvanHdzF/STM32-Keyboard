@@ -1,37 +1,24 @@
 /*
- * app_bluenrg.h
+ * sm.h
  *
- *  Created on: Dec 7, 2021
- *      Author: hussamaldean
+ *  Created on: Jan 30, 2024
+ *      Author: smoreno
  */
 
-#ifndef INC_APP_BLUENRG_H_
-#define INC_APP_BLUENRG_H_
+#ifndef INC_SM_H_
+#define INC_SM_H_
 
-
-
+//#include "sm.h"
 #include "stdint.h"
-#include <stdint.h>
-#include "app_bluenrg.h"
 
-#include "bluenrg_conf.h"
-#include "bluenrg1_types.h"
-#include "bluenrg1_gap.h"
-#include "bluenrg1_aci.h"
-#include "bluenrg1_hci_le.h"
-#include "stdio.h"
-#include "stdlib.h"
-#include "main.h"
-#include "keyboard.h"
-
-#include "services.h"
-
-void bluenrg_init(void);
-void bluenrg_process(void);
 
 /* protocol Mode */
 #define BOOT_PROTOCOL_MODE          (0x00)
 #define REPORT_PROTOCOL_MODE        (0x01)
+
+#define  ADV_INTERVAL_MIN_MS  30
+#define  ADV_INTERVAL_MAX_MS  50
+
 
 /*for state machine, i guess*/
 
@@ -55,8 +42,9 @@ void bluenrg_process(void);
 /*---------- Scan Window: amount of time for the duration of the LE scan (for a number N, Time = N x 0.625 msec) -----------*/
 #define SCAN_L      16384
 
-#define APP_FLAG(flag) (app_flags & flag)
 
+//int app_flags;
+#define APP_FLAG(flag) (app_flags & flag)
 #define APP_FLAG_SET(flag) (app_flags |= flag)
 #define APP_FLAG_CLEAR(flag) (app_flags &= ~flag)
 
@@ -69,10 +57,12 @@ void bluenrg_process(void);
 #define TX_BUFFER_FULL            0x8000
 #define BLE_SAMPLE_APP_COMPLETE_LOCAL_NAME_SIZE  18
 
-void Connection_StateMachine(void);
+
+
+/*Function Prototypes*/
 void Reset_DiscoveryContext(void);
-
-
-void Attribute_Modified_CB(uint16_t handle, uint8_t data_length, uint8_t* att_data);
-
-#endif /* INC_APP_BLUENRG_H_ */
+void Connection_StateMachine(void);
+void BLE_Process(void);
+uint8_t hidSetDeviceDiscoverable(uint8_t mode, uint8_t nameLen, uint8_t *name);
+void receiveData(uint8_t *data_buffer, uint8_t Nb_bytes);
+#endif /* INC_SM_H_ */

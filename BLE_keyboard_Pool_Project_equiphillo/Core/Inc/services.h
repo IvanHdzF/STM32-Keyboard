@@ -7,7 +7,6 @@
 
 #ifndef INC_SERVICES_H_
 #define INC_SERVICES_H_
-#include "app_bluenrg.h"
 #include "bluenrg_conf.h"
 #include "bluenrg1_types.h"
 #include "bluenrg1_gap.h"
@@ -96,7 +95,7 @@
 #define HID_CONTROL_POINT_CHAR_UUID                         (0x2A4C)
 #define HID_CLIENT_CHARACTERISTIC_CON_DESCRIPTOR            (0x2902)
 #define HID_REPORT_REFERENCE_CHAR_DESCRIPTOR                (0x2908)
-#define PERIPHERAL_PUBLIC_ADDRESS                            {0xBC, 0xFC, 0x00, 0xE1, 0x80, 0x02}
+
 
 #define HID_EXTERNAL_REPORT_DESCRIPTOR 						(0x2907)
 /**
@@ -165,20 +164,6 @@ typedef struct reportS {
 } report_Type;
 
 
-
-/**
- * @brief Battery Service Specification
- */
-typedef struct batteryServiceS {
-  /** TRUE if the battery level is included in the report map.
-   *  False otherwise
-   */
-  uint8_t inReportMap;
-  /** Report ID if the battery level is included
-   *  in the report map
-   */
-  uint8_t reportID;
-} batteryService_Type;
 
 
 /**
@@ -278,69 +263,11 @@ void send_data(uint8_t *data_buffer, uint8_t no_byte);
 tBleStatus addBatteryService(void);
 tBleStatus addDeviceInformationService(devInfService_Type* devInf);
 void updateDIService(devInfService_Type* devInf);
-tBleStatus addHumanInterfaceService(hidService_Type* hid);
+tBleStatus addHumanInterfaceService();
 void updateHIDServiceParams();
 void BLE_Profile_Add_Advertisment_Service_UUID(uint16_t servUUID);
-//static void Attribute_Modified_CB(uint16_t handle, uint8_t data_length, uint8_t *att_data);
 
-uint8_t Configure_HidPeripheral(void);
 
-/**
- * @name HOGP Device Configuration Functions
- *@{
- */
-
-/**
-  * @brief  Initializes the  HID Device with Peripheral Role and
-  * sets the public address.
-  * @param IO_Capability Sets the device IO capabilities. Possible value are:
-  * - IO_CAP_DISPLAY_ONLY
-  * - IO_CAP_DISPLAY_YES_NO
-  * - KEYBOARD_ONLY
-  * - IO_CAP_NO_INPUT_NO_OUTPUT
-  * - IO_CAP_KEYBOARD_DISPLAY
-  * @param connParam Connection parameter to send to the
-  * HID Host after bonding/service discovery
-  * @param dev_name_len Device name length
-  * @param dev_name Device name
-  * @param addr Public device address
-  * @retval Status of the call.
-  */
-uint8_t hidDevice_Init(uint8_t IO_Capability, connParam_Type connParam,
-                       uint8_t dev_name_len, uint8_t *dev_name, uint8_t *addr);
-
-/**
- * @brief Sets the Idle Connection Timeout according the HID over GATT profile specification.
- * The HID device may perform the GAP Terminate Connection procedure if the connection is
- * idle for a time period, which is implementation dependent.
- * After bonding the HID device should wait for this idle connection timeout to allow the HID
- * Host to complete the configuration procedure.
- * Default value 500 ms.
- * @note If the timeout is zero the Power Save management is disabled
- * @param timeout Idle connection timeout expressed in number of millisecond.
- * @retval Nothing
- */
-void hidSetIdleTimeout(uint32_t timeout);
-
-//@} \\END HOGP Device Configuration Functions
-
-/**
- * @name HOGP Security Functions
- *@{
- */
-
-/**
-  * @brief Configures the device for LE Security Mode 1 and either Security Level 2 or 3
-  * To set the Security Level 2 the MITM mode param shall be equal to FALSE, all the other params are ignored.
-  * To set the Security Level 3 the MITM mode param shall be equal to TRUE, the other params shall be used to
-  * signal if the device uses a fixed PIN or not.
-  * @param MITM_Mode MITM mode. TRUE to set the security level 3, FALSE to set the security level 2
-  * @param fixedPinUsed TRUE to use a fixed PIN, FALSE otherwise. If the MITM_Mode param is FALSE, this param is ignored
-  * @param fixedPinValue PIN value
-  * @retval Status of the call.
-  */
-
-uint8_t hidSetDeviceSecurty(uint8_t MITM_Mode, uint8_t fixedPinUsed, uint32_t fixedPinValue);
 
 /**
  * @name HOGP GATT Database Configuration Functions
@@ -353,50 +280,12 @@ uint8_t hidSetDeviceSecurty(uint8_t MITM_Mode, uint8_t fixedPinUsed, uint32_t fi
  * @param battery Battery Service characteristics to add.
  * See the tpyedef batteryService_Type for more details.
  * @param devInf Device Information Service characteristics to add.
- * See the typedef devInfService_Type for more details.
- * @param hid HID Service characteristics to add.
+ * See the typedef devInfService_Type for more details. *
  * See the typedef HID Service for more details.
  * @retval Status of the call
  */
-uint8_t hidAddServices(batteryService_Type* battery, devInfService_Type* devInf, hidService_Type* hid);
+uint8_t hidAddServices(devInfService_Type* devInf);
 
-//@} \\END HOGP GATT Database Configuration Functions
-
-/**
- * @name HOGP Discoverable Mode Functions
- *@{
- */
-
-/**
-  * @brief Starts the peripheral device discoverable mode. This mode is ended
-  * when either the upper layer issues a command to terminate the procedure
-  * using the command hidTerminateDiscoverableMode() or the
-  * timeout happens (timeout value is 180 s).
-  * @param mode Discoverable mode to use:
-  * - LIMITED_DISCOVERABLE_MODE
-  * - GENERAL_DISCOVERABLE_MODE
-  * @param nameLen Local name length. Max 20
-  * @param name Local name value
-  * @retval Status of the call.
-  */
-uint8_t hidSetDeviceDiscoverable(uint8_t mode, uint8_t nameLen, uint8_t *name);
-
-/**
- * @brief Sets the TX power level used during the communication
- * Default value is -2.1 dBm
- * @param level Power Level, valid range is [0 - 7]. The following table determines
- * the output power level (dBm):
- * - 0 = -14
- * - 1 = -11
- * - 2 = -8
- * - 3 = -5
- * - 4 = -2
- * - 5 = 2
- * - 6 = 4
- * - 7 = 8
- * @retval Status of the call
- */
-uint8_t hidSetTxPower(uint8_t level);
 
 
 /** Documentation for C struct Advertising_Report_t */
@@ -449,7 +338,7 @@ typedef struct Advertising_Report_t_s {
 	uint8_t RSSI;
 } Advertising_Report_t;
 
-uint8_t Find_DeviceName(uint8_t data_length, uint8_t* data_value);
+
 
 
 
