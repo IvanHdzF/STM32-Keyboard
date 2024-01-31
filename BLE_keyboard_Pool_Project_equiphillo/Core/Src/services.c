@@ -1,4 +1,3 @@
-#include "app_bluenrg.h"
 #include "services.h"
 #include "bluenrg_conf.h"
 #include "bluenrg1_types.h"
@@ -10,18 +9,42 @@
 #include "main.h"
 
 
-#define PERIPHERAL_PUBLIC_ADDRESS {0xBC, 0xFC, 0x00, 0xE1, 0x80, 0x02}
+
+/*Global Variables*/
+uint16_t battery_service_handle;
+uint16_t battery_level_char_handle;
+uint16_t BATTERY_client_char_config_desc;
+
+uint16_t dif_service_handle;
+uint16_t system_id_char_handle,
+model_number_char_handle,
+serial_number_char_handle,
+firmware_number_char_handle,
+hardware_number_char_handle,
+software_number_char_handle,
+manufacturer_name_char_handle,
+ieee_certification_char_handle,
+pnp_id_char_handle;
 
 
-//uint8_t  connected=0;
-//uint8_t  set_connectable=1;
-uint16_t connection_handle=0;
-uint8_t  notification_enabled=0;
+uint16_t hid_service_handle;
+uint16_t protocol_mode_char_handle,
+input_report_char_handle, output_report_char_handle, feature_report_char_handle,
+report_map_char_handle, boot_keyboard_input_char_handle,
+boot_keyboard_output_char_handle,hid_info_char_handle, hid_control_point_char_handle;
+
+uint16_t client_char_config_descriptor_handle,
+report_reference_char_descriptor_handle_input,
+report_reference_char_descriptor_handle_output,
+report_reference_char_descriptor_handle_feature,
+external_Report_Descriptor_handle;
+
+
 uint8_t serviceMaxAttributeRecords, encrypKeySize;
 uint16_t charValueLength;
 
-extern volatile int app_flags;
 
+extern uint8_t local_name[];
 
 // Keyboard report descriptor
 uint8_t reportDesc[] = {
@@ -67,101 +90,6 @@ uint8_t reportDesc[] = {
 };
 
 
-
-uint8_t dev_name[]={'S', 'T', 'K', 'e', 'y', 'b', 'o', 'a', 'r', 'd'};
-hidService_Type hid_param;
-uint8_t ret;
-
-uint8_t Configure_HidPeripheral(void)
-{
-	 uint8_t ret;
-	  batteryService_Type battery;
-	  devInfService_Type devInf;
-	  hidService_Type hid;
-	  connParam_Type connParam;
-	  uint8_t addr[] = PERIPHERAL_PUBLIC_ADDRESS;
-	  //uint8_t local_name[]={AD_TYPE_COMPLETE_LOCAL_NAME,'S', 'T', 'K', 'e', 'y', 'b', 'o', 'a', 'r', 'd'};
-	  /* HID Peripheral Init */
-	  connParam.interval_min = 0x10;
-	  connParam.interval_max = 0x14;
-	  connParam.slave_latency = 0x14;
-	  connParam.timeout_multiplier = 0xD2;
-	  ret = hidDevice_Init(IO_CAP_DISPLAY_ONLY, connParam, sizeof(dev_name), dev_name, addr);
-	  if (ret != BLE_STATUS_SUCCESS) {
-	    printf("Error in hidDevice_Init() 0x%02x\n", ret);
-	    return ret;
-	  }
-
-	  /* Set the HID Peripheral Security */
-	  ret = hidSetDeviceSecurty(TRUE, USE_FIXED_PIN_FOR_PAIRING, 123456); //TODO: Maybe check this if app doesn't work
-	  if (ret != BLE_STATUS_SUCCESS) {
-	    printf("Error in hidSetDeviceSecurty() 0x%02x\n", ret);
-	    return ret;
-	  }
-
-	  /* Set the HID Idle Timeout */
-	  hidSetIdleTimeout(IDLE_CONNECTION_TIMEOUT);
-
-
-	  /* Set the TX power -2 dBm */
-	  ret = hidSetTxPower(4);
-
-	  if (ret != BLE_STATUS_SUCCESS) {
-	    printf("Error in hidSetTxPower() 0x%02x\n", ret);
-	    return ret;
-	  }
-
-	  /**** Setup the GATT Database ****/
-
-	  /* Battery Service */
-	  battery.inReportMap = FALSE;
-
-	  /* Device Information Service:
-	     NOTE: memcpy length parameter must be equal to defined macro parameter length
-	     on hid_peripheral_config.h file */
-	  memcpy(devInf.manufacName, "ST Micro ", MANUFAC_NAME_LEN);
-	  memcpy(devInf.modelNumber, "0001", MODEL_NUMB_LEN);
-	  memcpy(devInf.fwRevision, "0630", FW_REV_LEN);
-	  memcpy(devInf.swRevision, "0001", SW_REV_LEN);
-	  devInf.pnpID[0] = 0x01;
-	  devInf.pnpID[1] = 0x30;
-	  devInf.pnpID[2] = 0x00;
-	  devInf.pnpID[3] = 0xfc;
-	  devInf.pnpID[4] = 0x00;
-	  devInf.pnpID[5] = 0xec;
-	  devInf.pnpID[6] = 0x00;
-
-	  /* HID Service */
-	  hid = hid_param;
-	  hid.reportDescLen = sizeof(reportDesc);
-	  hid.reportDesc = reportDesc;
-
-	  ret = hidAddServices(&battery, &devInf, &hid);
-	  if (ret != BLE_STATUS_SUCCESS) {
-	    printf("Error in hidAddServices() 0x%02x\n", ret);
-	    return ret;
-	  }
-
-	  /* Set the HID Peripheral device discoverable */
-	/*  ret = hidSetDeviceDiscoverable(LIMITED_DISCOVERABLE_MODE, sizeof(local_name), local_name);
-	  if (ret != BLE_STATUS_SUCCESS) {
-	    printf("Error in hidSetDeviceDiscoverable() 0x%02x\n", ret);
-	    return ret;
-	  }
-      */
-
-	  printf("HID Keyboard Configured\r\n");
-
-
-
-	  /* Button Init */
-
-
-
-	  return BLE_STATUS_SUCCESS;
-}
-
-
 /**
  * @brief Adds the Primary service and the characteristics associated
  * for the battery, device information and hid services.
@@ -173,21 +101,32 @@ uint8_t Configure_HidPeripheral(void)
  * See the typedef HID Service for more details.
  * @retval Status of the call
  */
-uint8_t hidAddServices(batteryService_Type* battery, devInfService_Type* devInf, hidService_Type* hid){
+uint8_t hidAddServices(devInfService_Type* devInf){
+
+	uint8_t ret;
 
     ret = addBatteryService();
+    if(ret != BLE_STATUS_SUCCESS){
+    	printf("ERROR IN ADDING BATTERY SERVICE\r\n");
+    	return ret;
+    }
+
     ret = addDeviceInformationService(devInf);
-    ret = addHumanInterfaceService(hid);
+    if(ret != BLE_STATUS_SUCCESS){
+        	printf("ERROR IN ADDING DEVICE INFORMATION SERVICE\r\n");
+        	return ret;
+        }
 
-
+    ret = addHumanInterfaceService();
+    if(ret != BLE_STATUS_SUCCESS){
+        	printf("ERROR IN ADDING HUMAN INTERFACE SERVICE\r\n");
+        	return ret;
+        }
 
     return BLE_STATUS_SUCCESS;
 }
 
 
-uint16_t battery_service_handle;
-uint16_t battery_level_char_handle;
-uint16_t BATTERY_client_char_config_desc;
 
 /**
  * @brief Adds BATTERY SERVICE (UUID 0x180F) with:
@@ -196,6 +135,7 @@ uint16_t BATTERY_client_char_config_desc;
  */
 tBleStatus addBatteryService(){
 
+	uint8_t ret;
     Service_UUID_t battery_service_uuid;
     Char_UUID_t battery_level_char_uuid;
     //Char_Desc_Uuid_t char_presentation_format_descriptor;
@@ -257,17 +197,6 @@ tBleStatus addBatteryService(){
 
 
 
-/*DEVICE INFORMATION SERVICE AND CHAR BEGIN*/
-uint16_t dif_service_handle;
-uint16_t system_id_char_handle,
-model_number_char_handle,
-serial_number_char_handle,
-firmware_number_char_handle,
-hardware_number_char_handle,
-software_number_char_handle,
-manufacturer_name_char_handle,
-ieee_certification_char_handle,
-pnp_id_char_handle;
 /**
  * @brief Adds DEVICE INFORMATION SERVICE (UUID 0x180A) with:
  * Characteristic (0x2A23) SYSTEM ID UUID
@@ -283,6 +212,8 @@ pnp_id_char_handle;
  * calls updateDIService() to update some characteristics
  */
 tBleStatus addDeviceInformationService(devInfService_Type* devInf){
+
+	uint8_t ret;
 
     Service_UUID_t device_info_service_uuid;
     Char_UUID_t system_id_char_uuid,
@@ -489,24 +420,12 @@ tBleStatus addDeviceInformationService(devInfService_Type* devInf){
 
 
     updateDIService(devInf);
-        return BLE_STATUS_SUCCESS;
+    printf("DEVICE INFORMATION SERVICE COMPLETED!!!\r\n");
+    return BLE_STATUS_SUCCESS;
 }
 
 
 
-
-
-uint16_t hid_service_handle;
-uint16_t protocol_mode_char_handle,
-input_report_char_handle, output_report_char_handle, feature_report_char_handle,
-report_map_char_handle, boot_keyboard_input_char_handle,
-boot_keyboard_output_char_handle,hid_info_char_handle, hid_control_point_char_handle;
-
-uint16_t client_char_config_descriptor_handle,
-report_reference_char_descriptor_handle_input,
-report_reference_char_descriptor_handle_output,
-report_reference_char_descriptor_handle_feature,
-external_Report_Descriptor_handle;
 /**
  * @brief Adds Human Interface Device SERVICE (UUID 0x1812) with:
  * Characteristic (0x2A4E) PROTOCOL MODE
@@ -519,8 +438,9 @@ external_Report_Descriptor_handle;
  * Characteristic (0x2A4A) HID INFORMATION
  * Characteristic (0x2A4C) CONTROL POINT
  */
-tBleStatus addHumanInterfaceService(hidService_Type* hid)
+tBleStatus addHumanInterfaceService()
 {
+	uint8_t ret;
     Service_UUID_t hid_service_uuid;
     Char_UUID_t protocol_mode_char_uuid,
     input_report_char_uuid,
@@ -881,44 +801,6 @@ tBleStatus addHumanInterfaceService(hidService_Type* hid)
 
 
 
-/*
- * Updates the values for the caracteristics of
- * Human Interface Devservice (global service and characteristics handles)
- */
-/*
-void updateHIDServiceParams()
-{
-
-    hidService_Type hid_param;
-    hidService_Type hid;
-
-    hid_param.bootSupport = TRUE;
-    hid_param.reportSupport = TRUE;
-    hid_param.reportReferenceDesc[0].ID = REPORT_ID;
-    hid_param.reportReferenceDesc[0].type = INPUT_REPORT;
-    hid_param.reportReferenceDesc[0].length = 8;
-    hid_param.reportReferenceDesc[1].ID = REPORT_ID;
-    hid_param.reportReferenceDesc[1].type = OUTPUT_REPORT;
-    hid_param.reportReferenceDesc[1].length = 1;
-    hid_param.isBootDevKeyboard = TRUE;
-    hid_param.isBootDevMouse = FALSE;
-    hid_param.externalReportEnabled = 1;
-    hid_param.includedServiceEnabled = FALSE;
-    hid_param.informationCharac[0] = 0x01;
-    hid_param.informationCharac[1] = 0x01;
-    hid_param.informationCharac[2] = 0;
-    hid_param.informationCharac[3] = 0x01;
-
-    hid = hid_param;
-
-    hid.reportDescLen = sizeof(reportDesc);
-    hid.reportDesc = reportDesc;
-
-
-
-}
-*/
-
 
 
 
@@ -934,6 +816,7 @@ void updateHIDServiceParams()
  */
 void updateDIService(devInfService_Type* devInf)
 {
+	uint8_t ret;
       memcpy(devInf->manufacName, "ST Micro ", MANUFAC_NAME_LEN);
       memcpy(devInf->modelNumber, "0001", MODEL_NUMB_LEN);
       memcpy(devInf->fwRevision, "0630", FW_REV_LEN);
@@ -946,17 +829,6 @@ void updateDIService(devInfService_Type* devInf)
       devInf->pnpID[5] = 0xec;
       devInf->pnpID[6] = 0x00;
 
-/*
-      uint16_t system_id_char_handle,
-      model_number_char_handle,
-      serial_number_char_handle,
-      firmware_number_char_handle,
-      hardware_number_char_handle,
-      software_number_char_handle,
-      manufacturer_name_char_handle,
-      ieee_certification_char_handle,
-      pnp_id_char_handle;
-*/
       ret = aci_gatt_update_char_value_ext(
             0,
             dif_service_handle,
@@ -1033,160 +905,6 @@ void updateDIService(devInfService_Type* devInf)
       {
         printf("Failed to update (PnP ID): 0x%02x\r\n", ret);
       }
-}
-
-
-
-/*
-
-
-void hci_le_connection_complete_event
-                                    (uint8_t Status,
-                                    uint16_t Connection_Handle,
-                                    uint8_t Role,
-                                    uint8_t Peer_Address_Type,
-                                    uint8_t Peer_Address[6],
-                                    uint16_t Conn_Interval,
-                                    uint16_t Conn_Latency,
-                                    uint16_t Supervision_Timeout,
-                                    uint8_t Master_Clock_Accuracy
-                                    )
-
-    {
-    connected=1;
-    connection_handle=Connection_Handle;
-    HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_SET);
-    printf("Connected \r\n");
-    }
-*/
-/*
-void hci_le_disconnection_complete_event
-                                        (uint8_t Status,
-                                         uint16_t Connection_Handle,
-                                         uint8_t Reason
-                                        )
-    {
-    connected=0;
-    set_connectable=1;
-    Connection_Handle=0;
-    printf("Disconnected \r\n");
-    HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_RESET);
-    }
-    */
-
-void APP_UserEvtRx(void *pData)
-    {
-
-    
-    uint32_t i;
-    hci_spi_pckt *hci_pckt =(hci_spi_pckt *)pData;
-    //printf("PACKET TYPE: %d \r\n", hci_pckt->type);
-   // hci_event_pckt* event_pckt = (hci_event_pckt*)hci_pckt->data;
-    //printf("EVENT TYPE: %d \r\n", event_pckt->evt);
-    if(hci_pckt->type==HCI_EVENT_PKT)
-        {
-
-        
-        //Get data from packet
-        hci_event_pckt *event_pckt =(hci_event_pckt*)hci_pckt->data;
-        //process meta data
-        if(event_pckt->evt ==EVT_LE_META_EVENT)
-            {
-            //get meta data
-            evt_le_meta_event *evt =(void *)event_pckt->data;
-            //process each meta data;
-            for (i=0;i<(sizeof(hci_le_meta_events_table))/(sizeof(hci_le_meta_events_table_type));i++)
-                {
-                    if(evt->subevent ==hci_le_meta_events_table[i].evt_code)
-                    {
-                 /*       if (APP_FLAG(CONNECTED) {
-                            printf("HCI_EVENT_PKT: EVT_LE_META_EVENT: %d \r\n", i);
-                        }*/
-                        hci_le_meta_events_table[i].process((void *)evt->data);
-                    }
-                }
-            }
-        //process vendor event
-        else if(event_pckt->evt==EVT_VENDOR)
-                {
-                evt_blue_aci *blue_evt= (void *)event_pckt->data;
-                for (i=0;i<(sizeof(hci_vendor_specific_events_table)/sizeof(hci_vendor_specific_events_table_type));i++)
-                    {
-                    if(blue_evt->ecode==hci_vendor_specific_events_table[i].evt_code)
-                        {
-                  /*      if (APP_FLAG(CONNECTED) {
-                            printf("HCI_EVENT_PKT: EVT_VENDOR: %d \r\n", i);
-                        }
-                        */
-                        hci_vendor_specific_events_table[i].process((void*)blue_evt->data);
-
-                        }
-
-                    }
-                }
-        else
-            {
-            for (i=0; i<(sizeof(hci_events_table)/sizeof(hci_events_table_type));i++)
-                    {
-
-                    if(event_pckt->evt==hci_events_table[i].evt_code)
-                        {
-                    /*
-                     *  if (APP_FLAG(CONNECTED) {
-                            printf("OTHER: OTHER: %d \r\n", i);
-                        }
-
-                        */
-                        hci_events_table[i].process((void*)event_pckt->data);
-                        }
-
-                    }
-            }
-        }
-
-
-
-
-    }
-
-
-/*******************************************************************************
-* Function Name  : Find_DeviceName.
-* Description    : Extracts the device name.
-* Input          : Data length.
-*                  Data value
-* Return         : TRUE if the local name found is the expected one, FALSE otherwise.
-*******************************************************************************/
-
-extern uint8_t local_name[];
-uint8_t Find_DeviceName(uint8_t data_length, uint8_t *data_value)
-{
-  uint8_t index = 0;
-
-  while (index < data_length)
-  {
-    /* Advertising data fields: len, type, values */
-    /* Check if field is complete local name and the length is the expected one for BLE SampleApp  */
-    if (data_value[index+1] == AD_TYPE_COMPLETE_LOCAL_NAME)
-    {
-      /* check if found device name is the expected one: local_name */
-      if (BLUENRG_memcmp(&data_value[index+1], &local_name[0], BLE_SAMPLE_APP_COMPLETE_LOCAL_NAME_SIZE) == 0)
-      {
-        return TRUE;
-      }
-      else
-      {
-        return FALSE;
-      }
-    }
-    else
-    {
-      /* move to next advertising field */
-      index += (data_value[index] +1);
-    }
-  }
-
-  return FALSE;
 }
 
 
