@@ -35,7 +35,7 @@ void Init()
 	ret = Configure_HidPeripheral();
 	if(ret != BLE_STATUS_SUCCESS)
 	{
-		printf("Configure_HidPeripheral failed \r\n");
+		BLUENRG_PRINTF("Configure_HidPeripheral failed \r\n");
 	}
 	Reset_DiscoveryContext();
 
@@ -61,7 +61,7 @@ uint8_t Configure_HidPeripheral(void)
 	ret = hidDevice_Init(IO_CAP_DISPLAY_ONLY, connParam, sizeof(dev_name), dev_name, addr);
 	if (ret != BLE_STATUS_SUCCESS)
 	{
-		printf("Error in hidDevice_Init() 0x%02x\n", ret);
+		BLUENRG_PRINTF("Error in hidDevice_Init() 0x%02x\n", ret);
 		return ret;
 	}
 
@@ -69,7 +69,7 @@ uint8_t Configure_HidPeripheral(void)
 	ret = hidSetDeviceSecurty(TRUE, USE_FIXED_PIN_FOR_PAIRING, 123456);
 	if (ret != BLE_STATUS_SUCCESS)
 	{
-		printf("Error in hidSetDeviceSecurty() 0x%02x\n", ret);
+		BLUENRG_PRINTF("Error in hidSetDeviceSecurty() 0x%02x\n", ret);
 		return ret;
 	}
 
@@ -79,7 +79,7 @@ uint8_t Configure_HidPeripheral(void)
 
 	if (ret != BLE_STATUS_SUCCESS)
 	{
-		printf("Error in hidSetTxPower() 0x%02x\n", ret);
+		BLUENRG_PRINTF("Error in hidSetTxPower() 0x%02x\n", ret);
 		return ret;
 	}
 
@@ -104,19 +104,19 @@ uint8_t Configure_HidPeripheral(void)
 	ret = hidAddServices(&devInf);
 	if (ret != BLE_STATUS_SUCCESS)
 	{
-		printf("Error in hidAddServices() 0x%02x\n", ret);
+		BLUENRG_PRINTF("Error in hidAddServices() 0x%02x\n", ret);
 		return ret;
 	}
 
 	/* Set the HID Peripheral device discoverable */
 	/*  ret = hidSetDeviceDiscoverable(LIMITED_DISCOVERABLE_MODE, sizeof(local_name), local_name);
 	  if (ret != BLE_STATUS_SUCCESS) {
-		printf("Error in hidSetDeviceDiscoverable() 0x%02x\n", ret);
+		BLUENRG_PRINTF("Error in hidSetDeviceDiscoverable() 0x%02x\n", ret);
 		return ret;
 	  }
 	  */
 
-	printf("HID Keyboard Configured\r\n");
+	BLUENRG_PRINTF("HID Keyboard Configured\r\n");
 	return BLE_STATUS_SUCCESS;
 }
 
@@ -140,10 +140,10 @@ uint8_t hidSetDeviceSecurty(uint8_t MITM_Mode, uint8_t fixedPinUsed, uint32_t fi
                                                fixedPinValue,
                                                0x00);
   if(ret != BLE_STATUS_SUCCESS) {
-    printf("aci_gap_set_authentication_requirement()failed: 0x%02x\r\n", ret);
+    BLUENRG_PRINTF("aci_gap_set_authentication_requirement()failed: 0x%02x\r\n", ret);
   }
   else
-    printf("aci_gap_set_authentication_requirement() --> SUCCESS\r\n");
+    BLUENRG_PRINTF("aci_gap_set_authentication_requirement() --> SUCCESS\r\n");
   return ret;
 }
 
@@ -154,7 +154,7 @@ uint8_t hidSetTxPower(uint8_t level)
   ret = aci_hal_set_tx_power_level(1, level);
   if (ret != BLE_STATUS_SUCCESS)
   {
-    printf("Error in aci_hal_set_tx_power_level() 0x%04x\r\n", ret);
+    BLUENRG_PRINTF("Error in aci_hal_set_tx_power_level() 0x%04x\r\n", ret);
   }
   return ret;
 }
@@ -180,28 +180,28 @@ uint8_t hidDevice_Init(uint8_t IO_Capability, connParam_Type connParam,
 	ret = aci_hal_write_config_data(CONFIG_DATA_PUBADDR_OFFSET, CONFIG_DATA_PUBADDR_LEN, addr);
 	if (ret != BLE_STATUS_SUCCESS)
 	{
-		// printf("Setting BD_ADDR failed 0x%02x\r\n", ret);
+		// BLUENRG_PRINTF("Setting BD_ADDR failed 0x%02x\r\n", ret);
 		return ret;
 	}
 	else
 	{
-		printf("Public address: ");
+		BLUENRG_PRINTF("Public address: ");
 		for (uint8_t i = 5; i > 0; i--)
 		{
-			printf("%02X-", addr[i]);
+			BLUENRG_PRINTF("%02X-", addr[i]);
 		}
-		printf("%02X\r\n", addr[0]);
+		BLUENRG_PRINTF("%02X\r\n", addr[0]);
 	}
 
 	/* GATT Init */
 	ret = aci_gatt_init();
 	if (ret != BLE_STATUS_SUCCESS)
 	{
-		printf("aci_gatt_init() failed: 0x%02x\r\n", ret);
+		BLUENRG_PRINTF("aci_gatt_init() failed: 0x%02x\r\n", ret);
 		return ret;
 	}
 	else
-		printf("aci_gatt_init() --> SUCCESS\r\n");
+		BLUENRG_PRINTF("aci_gatt_init() --> SUCCESS\r\n");
 
 	/* GAP Init */
 	uint8_t appareance[] = {0xC1, 0x03};
@@ -217,7 +217,7 @@ uint8_t hidDevice_Init(uint8_t IO_Capability, connParam_Type connParam,
 	ret = aci_gap_set_io_capability(IO_Capability);
 	if (ret != BLE_STATUS_SUCCESS)
 	{
-		printf("GAP_set_io failed: 0x%02x\r\n", ret);
+		BLUENRG_PRINTF("GAP_set_io failed: 0x%02x\r\n", ret);
 	}
 	return ret;
 }

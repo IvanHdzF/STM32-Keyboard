@@ -46,7 +46,7 @@ void BLE_Process(void)
 	if (APP_FLAG(CONNECTED) && !protocolModeSet)
 	{
 		protocolMode = REPORT_PROTOCOL_MODE;
-		printf("protocol Mode was set to 1\r\n");
+		BLUENRG_PRINTF("protocol Mode was set to 1\r\n");
 		aci_gatt_update_char_value(hid_service_handle, protocol_mode_char_handle, 0, 1, &protocolMode);
 		protocolModeSet = 1;
 	}
@@ -54,20 +54,20 @@ void BLE_Process(void)
 	{
 		if ((mtu_exchanged == 0) && (mtu_exchanged_wait == 0))
 		{
-			printf("ROLE SLAVE (mtu_exchanged %d, mtu_exchanged_wait %d)\r\n",
+			BLUENRG_PRINTF("ROLE SLAVE (mtu_exchanged %d, mtu_exchanged_wait %d)\r\n",
 				   mtu_exchanged, mtu_exchanged_wait);
 
 			mtu_exchanged_wait = 1;
 			uint8_t ret = aci_gatt_exchange_config(connection_handle);
 			if (ret != BLE_STATUS_SUCCESS)
 			{
-				printf("aci_gatt_exchange_configuration error 0x%02x\r\n", ret);
+				BLUENRG_PRINTF("aci_gatt_exchange_configuration error 0x%02x\r\n", ret);
 			}
 		}
 	}
 	if (APP_FLAG(CONNECTED) && APP_FLAG(NOTIFICATIONS_ENABLED))
 	{
-		printf("Trying to print smth\r\n");
+		BLUENRG_PRINTF("Trying to print smth\r\n");
 		processInputData(data, sizeof(data));
 		//HAL_GPIO_TogglePin(GPIOA, LED_Pin);
 		HAL_Delay(1000);
@@ -84,14 +84,14 @@ void Connection_StateMachine(void)
     {
     case (INIT_STATE):
     {
-        printf("INSIDE INIT STATE\r\n");
+        BLUENRG_PRINTF("INSIDE INIT STATE\r\n");
         Reset_DiscoveryContext();
         discovery.device_state = START_DISCOVERY_PROC;
     }
     break; /* end case (INIT_STATE) */
     case (START_DISCOVERY_PROC):
     {
-      //  printf("INSIDE START_DISCOVERY_PROC\r\n");
+      //  BLUENRG_PRINTF("INSIDE START_DISCOVERY_PROC\r\n");
 
         /*
         ADV_IND,
@@ -107,12 +107,12 @@ void Connection_StateMachine(void)
         //ret = aci_gap_start_limited_discovery_proc(SCAN_P, SCAN_L, PUBLIC_ADDR, 0x00);
         if (ret != BLE_STATUS_SUCCESS)
         {
-            printf("aci_gap_start_limited_discovery_proc() failed: %02X\r\n", ret);
+            BLUENRG_PRINTF("aci_gap_start_limited_discovery_proc() failed: %02X\r\n", ret);
             discovery.device_state = DISCOVERY_ERROR;
         }
         else
         {
-            printf("aci_gap_start_limited_discovery_proc OK\r\n");
+            BLUENRG_PRINTF("aci_gap_start_limited_discovery_proc OK\r\n");
             discovery.startTime = HAL_GetTick(); /**************************TODO**********/
             discovery.check_disc_proc_timer = TRUE;
             discovery.check_disc_mode_timer = FALSE;
@@ -122,7 +122,7 @@ void Connection_StateMachine(void)
     break;/* end case (START_DISCOVERY_PROC) */
     case (WAIT_TIMER_EXPIRED):
     {
-     //   printf("INSIDE WAIT_TIMER_EXPIRED\r\n");
+     //   BLUENRG_PRINTF("INSIDE WAIT_TIMER_EXPIRED\r\n");
         /* Verify if startTime check has to be done  since discovery procedure is ongoing */
         if (discovery.check_disc_proc_timer == TRUE)
         {
@@ -153,16 +153,16 @@ void Connection_StateMachine(void)
 
     case (DO_NON_DISCOVERABLE_MODE):
     {
-       // printf("INSIDE DO_NON_DISCOVERABLE_MODE\r\n");
+       // BLUENRG_PRINTF("INSIDE DO_NON_DISCOVERABLE_MODE\r\n");
         ret = aci_gap_set_non_discoverable();
         if (ret != BLE_STATUS_SUCCESS)
         {
-            printf("aci_gap_set_non_discoverable() failed: 0x%02x\r\n", ret);
+            BLUENRG_PRINTF("aci_gap_set_non_discoverable() failed: 0x%02x\r\n", ret);
             discovery.device_state = DISCOVERY_ERROR;
         }
         else
         {
-            printf("aci_gap_set_non_discoverable() OK\r\n");
+            BLUENRG_PRINTF("aci_gap_set_non_discoverable() OK\r\n");
             /* Restart Central discovery procedure */
             discovery.device_state = INIT_STATE;
         }
@@ -170,50 +170,50 @@ void Connection_StateMachine(void)
     break; /* end case (DO_NON_DISCOVERABLE_MODE) */
     case (DO_TERMINATE_GAP_PROC):
     {
-       // printf("INSIDE DO_TERMINATE_GAP_PROC\r\n");
+       // BLUENRG_PRINTF("INSIDE DO_TERMINATE_GAP_PROC\r\n");
         /* terminate gap procedure */
         ret = aci_gap_terminate_gap_proc(0x02); // GENERAL_DISCOVERY_PROCEDURE
         if (ret != BLE_STATUS_SUCCESS)
         {
-            printf("aci_gap_terminate_gap_procedure() failed: 0x%02x\r\n", ret);
+            BLUENRG_PRINTF("aci_gap_terminate_gap_procedure() failed: 0x%02x\r\n", ret);
             discovery.device_state = DISCOVERY_ERROR;
             break;
         }
         else
         {
-            printf("aci_gap_terminate_gap_procedure() OK\r\n");
+            BLUENRG_PRINTF("aci_gap_terminate_gap_procedure() OK\r\n");
             discovery.device_state = WAIT_EVENT; /* wait for GAP procedure complete */
         }
     }
     break; /* end case (DO_TERMINATE_GAP_PROC) */
     case (DO_DIRECT_CONNECTION_PROC):
     {
-      //  printf("INSIDE DO_DIRECT_CONNECTION_PROC\r\n");
-        printf("Device Found with address: ");
+      //  BLUENRG_PRINTF("INSIDE DO_DIRECT_CONNECTION_PROC\r\n");
+        BLUENRG_PRINTF("Device Found with address: ");
         for (uint8_t i = 5; i > 0; i--)
         {
-            printf("%02X-", discovery.device_found_address[i]);
+            BLUENRG_PRINTF("%02X-", discovery.device_found_address[i]);
         }
-        printf("%02X\r\n", discovery.device_found_address[0]);
+        BLUENRG_PRINTF("%02X\r\n", discovery.device_found_address[0]);
         /* Do connection with first discovered device */
         ret = aci_gap_create_connection(SCAN_P, SCAN_L,
             discovery.device_found_address_type, discovery.device_found_address,
             PUBLIC_ADDR, 40, 40, 0, 60, 2000, 2000);
         if (ret != BLE_STATUS_SUCCESS)
         {
-            printf("aci_gap_create_connection() failed: 0x%02x\r\n", ret);
+            BLUENRG_PRINTF("aci_gap_create_connection() failed: 0x%02x\r\n", ret);
             discovery.device_state = DISCOVERY_ERROR;
         }
         else
         {
-            printf("aci_gap_create_connection() OK\r\n");
+            BLUENRG_PRINTF("aci_gap_create_connection() OK\r\n");
             discovery.device_state = WAIT_EVENT;
         }
     }
     break; /* end case (DO_DIRECT_CONNECTION_PROC) */
     case (WAIT_EVENT):
     {
-    //    printf("INSIDE WAIT_EVENT\r\n");
+    //    BLUENRG_PRINTF("INSIDE WAIT_EVENT\r\n");
         discovery.device_state = WAIT_EVENT;
     }
     break; /* end case (WAIT_EVENT) */
@@ -222,7 +222,7 @@ void Connection_StateMachine(void)
 
     case (ENTER_DISCOVERY_MODE):
     {
-    //    printf("INSIDE ENTER_DISCOVERY_MODE\r\n");
+    //    BLUENRG_PRINTF("INSIDE ENTER_DISCOVERY_MODE\r\n");
         /* Put Peripheral device in discoverable mode */
 
         /* disable scan response */
@@ -236,12 +236,12 @@ void Connection_StateMachine(void)
 
 
         if (ret != BLE_STATUS_SUCCESS) {
-            printf("Error in hidSetDeviceDiscoverable() 0x%02x\n", ret);
+            BLUENRG_PRINTF("Error in hidSetDeviceDiscoverable() 0x%02x\n", ret);
             discovery.device_state = DISCOVERY_ERROR;
         }
         else
         {
-            printf("aci_gap_set_discoverable() OK\r\n");
+            BLUENRG_PRINTF("aci_gap_set_discoverable() OK\r\n");
             discovery.startTime = HAL_GetTick();
             discovery.check_disc_mode_timer = TRUE;
             discovery.check_disc_proc_timer = FALSE;
@@ -251,7 +251,7 @@ void Connection_StateMachine(void)
     break; /* end case (ENTER_DISCOVERY_MODE) */
     case (DISCOVERY_ERROR):
     {
-     //   printf("INSIDE DISCOVERY_ERROR\r\n");
+     //   BLUENRG_PRINTF("INSIDE DISCOVERY_ERROR\r\n");
         Reset_DiscoveryContext();
     }
     break; /* end case (DISCOVERY_ERROR) */
@@ -279,50 +279,50 @@ uint8_t hidSetDeviceDiscoverable(uint8_t mode, uint8_t nameLen, uint8_t *name)
   BLE_Profile_Add_Advertisment_Service_UUID(DEVICE_INFORMATION_SERVICE_UUID);
   if (mode == LIMITED_DISCOVERABLE_MODE)
   {
-    printf("Set limited Discoverable Mode.\n");
+    BLUENRG_PRINTF("Set limited Discoverable Mode.\n");
     ret = aci_gap_set_limited_discoverable(ADV_IND,
                                            (ADV_INTERVAL_MIN_MS * 1000) / 625, (ADV_INTERVAL_MAX_MS * 1000) / 625,
                                            PUBLIC_ADDR, NO_WHITE_LIST_USE,
                                            nameLen, name, 0, NULL, 0, 0);
     if (ret != BLE_STATUS_SUCCESS)
     {
-      printf("aci_gap_set_discoverable() failed: 0x%02x\r\n", ret);
+      BLUENRG_PRINTF("aci_gap_set_discoverable() failed: 0x%02x\r\n", ret);
     }
     else
     {
-      printf("aci_gap_set_discoverable() LIMITED --> SUCCESS\r\n");
+      BLUENRG_PRINTF("aci_gap_set_discoverable() LIMITED --> SUCCESS\r\n");
     }
     return ret;
   }
   else if (mode == GENERAL_DISCOVERABLE_MODE)
   {
-    // printf("Set General Discoverable Mode.\n");
+    // BLUENRG_PRINTF("Set General Discoverable Mode.\n");
     ret = aci_gap_set_discoverable(ADV_IND,
                                    (ADV_INTERVAL_MIN_MS * 1000) / 625, (ADV_INTERVAL_MAX_MS * 1000) / 625,
                                    STATIC_RANDOM_ADDR, NO_WHITE_LIST_USE,
                                    nameLen, name, 0, NULL, 0, 0);
     if (ret != BLE_STATUS_SUCCESS)
     {
-      // printf("aci_gap_set_discoverable() failed: 0x%02x\r\n",ret);
+      // BLUENRG_PRINTF("aci_gap_set_discoverable() failed: 0x%02x\r\n",ret);
     }
     else
     {
-      printf("aci_gap_set_discoverable() GENERAL--> SUCCESS\r\n");
+      BLUENRG_PRINTF("aci_gap_set_discoverable() GENERAL--> SUCCESS\r\n");
     }
 
     return ret;
   }
-  printf("Wrong mode, device couldn't set as discoverable.\n");
+  BLUENRG_PRINTF("Wrong mode, device couldn't set as discoverable.\n");
   return -1;
 }
 void receiveData(uint8_t *data_buffer, uint8_t Nb_bytes)
 {
-  printf("Received: ");
+  BLUENRG_PRINTF("Received: ");
   for (int i = 0; i < Nb_bytes; i++)
   {
-    printf("%c", data_buffer[i]);
+    BLUENRG_PRINTF("%c", data_buffer[i]);
   }
-  printf("\r\n");
+  BLUENRG_PRINTF("\r\n");
   fflush(stdout);
 }
 

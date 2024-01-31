@@ -1392,7 +1392,6 @@ tBleStatus aci_gatt_write_resp(uint16_t Connection_Handle,
 }
 tBleStatus aci_gatt_allow_read(uint16_t Connection_Handle)
 {
-    printf("Entered aci_gatt_allow_read \r\n ");
   struct hci_request rq;
   uint8_t cmd_buffer[258];
   aci_gatt_allow_read_cp0 *cp0 = (aci_gatt_allow_read_cp0*)(cmd_buffer);

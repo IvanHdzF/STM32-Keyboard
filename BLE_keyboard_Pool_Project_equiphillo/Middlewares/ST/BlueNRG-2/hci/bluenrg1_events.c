@@ -1891,9 +1891,9 @@ tBleStatus hci_le_connection_update_complete_event_process(uint8_t *buffer_in)
                                           rp0->Conn_Interval,
                                           rp0->Conn_Latency,
                                           rp0->Supervision_Timeout);
-  printf("CONN INTERVAL: %d \r\n", rp0->Conn_Interval);
-  printf("CONN LATENCY: %d \r\n", rp0->Conn_Latency);
-  printf("CONN STATUS: %d \r\n", rp0->Status);
+  BLUENRG_PRINTF("CONN INTERVAL: %d \r\n", rp0->Conn_Interval);
+  BLUENRG_PRINTF("CONN LATENCY: %d \r\n", rp0->Conn_Latency);
+  BLUENRG_PRINTF("CONN STATUS: %d \r\n", rp0->Status);
 
   return status;
 }

@@ -107,19 +107,19 @@ uint8_t hidAddServices(devInfService_Type* devInf){
 
     ret = addBatteryService();
     if(ret != BLE_STATUS_SUCCESS){
-    	printf("ERROR IN ADDING BATTERY SERVICE\r\n");
+    	BLUENRG_PRINTF("ERROR IN ADDING BATTERY SERVICE\r\n");
     	return ret;
     }
 
     ret = addDeviceInformationService(devInf);
     if(ret != BLE_STATUS_SUCCESS){
-        	printf("ERROR IN ADDING DEVICE INFORMATION SERVICE\r\n");
+        	BLUENRG_PRINTF("ERROR IN ADDING DEVICE INFORMATION SERVICE\r\n");
         	return ret;
         }
 
     ret = addHumanInterfaceService();
     if(ret != BLE_STATUS_SUCCESS){
-        	printf("ERROR IN ADDING HUMAN INTERFACE SERVICE\r\n");
+        	BLUENRG_PRINTF("ERROR IN ADDING HUMAN INTERFACE SERVICE\r\n");
         	return ret;
         }
 
@@ -154,7 +154,7 @@ tBleStatus addBatteryService(){
             &battery_service_handle);
     if (ret != BLE_STATUS_SUCCESS)
     {
-           printf("Error in Adding BATTERY SERVICE 0x%02x\n", ret);
+           BLUENRG_PRINTF("Error in Adding BATTERY SERVICE 0x%02x\n", ret);
            return ret;
     }
 
@@ -172,7 +172,7 @@ tBleStatus addBatteryService(){
             &battery_level_char_handle);
     if (ret != BLE_STATUS_SUCCESS)
     {
-        printf("Error in Adding Char for BATTERY SERVICE 0x%02x\n", ret);
+        BLUENRG_PRINTF("Error in Adding Char for BATTERY SERVICE 0x%02x\n", ret);
         return ret;
     }
     uint8_t batteryLevel=75;
@@ -186,11 +186,11 @@ tBleStatus addBatteryService(){
             (uint8_t *)&batteryLevel);
     if(ret != BLE_STATUS_SUCCESS)
       {
-        printf("Updating BATERRY level failed failed: 0x%02x\r\n", ret);
+        BLUENRG_PRINTF("Updating BATERRY level failed failed: 0x%02x\r\n", ret);
         return ret;
       }
 
-    printf("BATTERY SERVICE COMPLETED!!!\r\n");
+    BLUENRG_PRINTF("BATTERY SERVICE COMPLETED!!!\r\n");
     return BLE_STATUS_SUCCESS;
 }
 
@@ -246,7 +246,7 @@ tBleStatus addDeviceInformationService(devInfService_Type* devInf){
                 &dif_service_handle);
     if (ret != BLE_STATUS_SUCCESS)
     {
-       printf("Error in Adding Device Information SERVICE 0x%02x\n", ret);
+       BLUENRG_PRINTF("Error in Adding Device Information SERVICE 0x%02x\n", ret);
        return ret;
     }
 
@@ -264,7 +264,7 @@ tBleStatus addDeviceInformationService(devInfService_Type* devInf){
                 &manufacturer_name_char_handle);
     if (ret != BLE_STATUS_SUCCESS)
     {
-        printf("Error in Adding Char (MANUFACTURER) for DEVICE INFORMATION SERVICE 0x%02x\n", ret);
+        BLUENRG_PRINTF("Error in Adding Char (MANUFACTURER) for DEVICE INFORMATION SERVICE 0x%02x\n", ret);
         return ret;
     }
 
@@ -284,7 +284,7 @@ tBleStatus addDeviceInformationService(devInfService_Type* devInf){
                 &system_id_char_handle);
     if (ret != BLE_STATUS_SUCCESS)
     {
-        printf("Error in Adding Char (SYSTEM ID) for DEVICE INFORMATION SERVICE 0x%02x\n", ret);
+        BLUENRG_PRINTF("Error in Adding Char (SYSTEM ID) for DEVICE INFORMATION SERVICE 0x%02x\n", ret);
         return ret;
     }
 
@@ -303,7 +303,7 @@ tBleStatus addDeviceInformationService(devInfService_Type* devInf){
                 &model_number_char_handle);
     if (ret != BLE_STATUS_SUCCESS)
     {
-        printf("Error in Adding Char (MODEL NO) for DEVICE INFORMATION SERVICE 0x%02x\n", ret);
+        BLUENRG_PRINTF("Error in Adding Char (MODEL NO) for DEVICE INFORMATION SERVICE 0x%02x\n", ret);
         return ret;
     }
 
@@ -321,7 +321,7 @@ tBleStatus addDeviceInformationService(devInfService_Type* devInf){
                 &serial_number_char_handle);
     if (ret != BLE_STATUS_SUCCESS)
     {
-        printf("Error in Adding Char (SERIAL NO) for DEVICE INFORMATION SERVICE 0x%02x\n", ret);
+        BLUENRG_PRINTF("Error in Adding Char (SERIAL NO) for DEVICE INFORMATION SERVICE 0x%02x\n", ret);
         return ret;
     }
 
@@ -339,7 +339,7 @@ tBleStatus addDeviceInformationService(devInfService_Type* devInf){
                 &firmware_number_char_handle);
     if (ret != BLE_STATUS_SUCCESS)
     {
-        printf("Error in Adding Char (FIRMWARE NO) for DEVICE INFORMATION SERVICE 0x%02x\n", ret);
+        BLUENRG_PRINTF("Error in Adding Char (FIRMWARE NO) for DEVICE INFORMATION SERVICE 0x%02x\n", ret);
         return ret;
     }
 
@@ -357,7 +357,7 @@ tBleStatus addDeviceInformationService(devInfService_Type* devInf){
                 &hardware_number_char_handle);
     if (ret != BLE_STATUS_SUCCESS)
     {
-        printf("Error in Adding Char (HARDWARE NO) for DEVICE INFORMATION SERVICE 0x%02x\n", ret);
+        BLUENRG_PRINTF("Error in Adding Char (HARDWARE NO) for DEVICE INFORMATION SERVICE 0x%02x\n", ret);
         return ret;
     }
 
@@ -377,7 +377,7 @@ tBleStatus addDeviceInformationService(devInfService_Type* devInf){
                 &software_number_char_handle);
     if (ret != BLE_STATUS_SUCCESS)
     {
-        printf("Error in Adding Char (SOFTWARE NO) for DEVICE INFORMATION SERVICE 0x%02x\n", ret);
+        BLUENRG_PRINTF("Error in Adding Char (SOFTWARE NO) for DEVICE INFORMATION SERVICE 0x%02x\n", ret);
         return ret;
     }
 
@@ -396,7 +396,7 @@ tBleStatus addDeviceInformationService(devInfService_Type* devInf){
                 &ieee_certification_char_handle);
     if (ret != BLE_STATUS_SUCCESS)
     {
-        printf("Error in Adding Char (IEEE CERT) for DEVICE INFORMATION SERVICE 0x%02x\n", ret);
+        BLUENRG_PRINTF("Error in Adding Char (IEEE CERT) for DEVICE INFORMATION SERVICE 0x%02x\n", ret);
         return ret;
     }
 
@@ -414,13 +414,13 @@ tBleStatus addDeviceInformationService(devInfService_Type* devInf){
                 &pnp_id_char_handle);
     if (ret != BLE_STATUS_SUCCESS)
     {
-        printf("Error in Adding Char (PNP ID) for DEVICE INFORMATION SERVICE 0x%02x\n", ret);
+        BLUENRG_PRINTF("Error in Adding Char (PNP ID) for DEVICE INFORMATION SERVICE 0x%02x\n", ret);
         return ret;
     }
 
 
     updateDIService(devInf);
-    printf("DEVICE INFORMATION SERVICE COMPLETED!!!\r\n");
+    BLUENRG_PRINTF("DEVICE INFORMATION SERVICE COMPLETED!!!\r\n");
     return BLE_STATUS_SUCCESS;
 }
 
@@ -479,7 +479,7 @@ tBleStatus addHumanInterfaceService()
                     &hid_service_handle);
     if (ret != BLE_STATUS_SUCCESS)
     {
-       printf("Error in Adding Human Interface SERVICE 0x%02x\n", ret);
+       BLUENRG_PRINTF("Error in Adding Human Interface SERVICE 0x%02x\n", ret);
        return ret;
     }
 
@@ -498,7 +498,7 @@ tBleStatus addHumanInterfaceService()
                             &input_report_char_handle);
         if (ret != BLE_STATUS_SUCCESS)
         {
-            printf("Error in Adding Char (INPUT REPORT) for HID SERVICE 0x%02x\n", ret);
+            BLUENRG_PRINTF("Error in Adding Char (INPUT REPORT) for HID SERVICE 0x%02x\n", ret);
             return ret;
         }
 //adding Client Characteristic Config Descriptor for input report
@@ -553,7 +553,7 @@ tBleStatus addHumanInterfaceService()
                                 &output_report_char_handle);
             if (ret != BLE_STATUS_SUCCESS)
             {
-                printf("Error in Adding Char (OUTPUT REPORT) for HID SERVICE 0x%02x\n", ret);
+                BLUENRG_PRINTF("Error in Adding Char (OUTPUT REPORT) for HID SERVICE 0x%02x\n", ret);
                 return ret;
             }
 
@@ -596,7 +596,7 @@ tBleStatus addHumanInterfaceService()
                                     );
                 if (ret != BLE_STATUS_SUCCESS)
                 {
-                    printf("Error in Adding Char (FEATURE REPORT) for HID SERVICE 0x%02x\n", ret);
+                    BLUENRG_PRINTF("Error in Adding Char (FEATURE REPORT) for HID SERVICE 0x%02x\n", ret);
                     return ret;
                 }
 
@@ -633,7 +633,7 @@ tBleStatus addHumanInterfaceService()
                         &protocol_mode_char_handle);
     if (ret != BLE_STATUS_SUCCESS)
     {
-        printf("Error in Adding Char (PROTOCOL MODE) for HID SERVICE 0x%02x\n", ret);
+        BLUENRG_PRINTF("Error in Adding Char (PROTOCOL MODE) for HID SERVICE 0x%02x\n", ret);
         return ret;
     }
 
@@ -652,7 +652,7 @@ tBleStatus addHumanInterfaceService()
                         &report_map_char_handle);
     if (ret != BLE_STATUS_SUCCESS)
     {
-        printf("Error in Adding Char (REPORT MAP) for HID SERVICE 0x%02x\n", ret);
+        BLUENRG_PRINTF("Error in Adding Char (REPORT MAP) for HID SERVICE 0x%02x\n", ret);
         return ret;
     }
 
@@ -669,7 +669,7 @@ tBleStatus addHumanInterfaceService()
 
     if (ret != BLE_STATUS_SUCCESS)
         {
-            printf("ERROR  at updating report map: 0x%02x\n", ret);
+            BLUENRG_PRINTF("ERROR  at updating report map: 0x%02x\n", ret);
             return ret;
         }
 
@@ -687,7 +687,7 @@ tBleStatus addHumanInterfaceService()
                         &boot_keyboard_input_char_handle);
     if (ret != BLE_STATUS_SUCCESS)
     {
-        printf("Error in Adding Char (BOOT KEYBOARD INPUT) for HID SERVICE 0x%02x\n", ret);
+        BLUENRG_PRINTF("Error in Adding Char (BOOT KEYBOARD INPUT) for HID SERVICE 0x%02x\n", ret);
         return ret;
     }
 
@@ -705,7 +705,7 @@ tBleStatus addHumanInterfaceService()
                         &boot_keyboard_output_char_handle);
     if (ret != BLE_STATUS_SUCCESS)
     {
-        printf("Error in Adding Char (BOOT KEYBOARD OUTPUT) for HID SERVICE 0x%02x\n", ret);
+        BLUENRG_PRINTF("Error in Adding Char (BOOT KEYBOARD OUTPUT) for HID SERVICE 0x%02x\n", ret);
         return ret;
     }
 
@@ -723,7 +723,7 @@ tBleStatus addHumanInterfaceService()
                         &hid_info_char_handle);
     if (ret != BLE_STATUS_SUCCESS)
     {
-        printf("Error in Adding Char (HID INFORMATION) for HID SERVICE 0x%02x\n", ret);
+        BLUENRG_PRINTF("Error in Adding Char (HID INFORMATION) for HID SERVICE 0x%02x\n", ret);
         return ret;
     }
 
@@ -771,7 +771,7 @@ tBleStatus addHumanInterfaceService()
     ret = aci_gatt_update_char_value(hid_service_handle, hid_info_char_handle, 0, sizeof(appHidServData), (uint8_t*)&appHidServData);
     if (ret != BLE_STATUS_SUCCESS)
     {
-        printf("Error in Adding VALUE for Char (HID INFORMATION) for HID SERVICE 0x%02x\n", ret);
+        BLUENRG_PRINTF("Error in Adding VALUE for Char (HID INFORMATION) for HID SERVICE 0x%02x\n", ret);
         return ret;
     }
 
@@ -790,7 +790,7 @@ tBleStatus addHumanInterfaceService()
                         &hid_control_point_char_handle);
     if (ret != BLE_STATUS_SUCCESS)
     {
-        printf("Error in Adding Char (HID CONTROL POINT) for HID SERVICE 0x%02x\n", ret);
+        BLUENRG_PRINTF("Error in Adding Char (HID CONTROL POINT) for HID SERVICE 0x%02x\n", ret);
         return ret;
     }
 
@@ -841,7 +841,7 @@ void updateDIService(devInfService_Type* devInf)
 
       if(ret != BLE_STATUS_SUCCESS)
       {
-        printf("Failed to update (MANUFACT NAME): 0x%02x\r\n", ret);
+        BLUENRG_PRINTF("Failed to update (MANUFACT NAME): 0x%02x\r\n", ret);
       }
 
       ret = aci_gatt_update_char_value_ext(
@@ -856,7 +856,7 @@ void updateDIService(devInfService_Type* devInf)
 
       if(ret != BLE_STATUS_SUCCESS)
       {
-        printf("Failed to update (MODEL NUMBER): 0x%02x\r\n", ret);
+        BLUENRG_PRINTF("Failed to update (MODEL NUMBER): 0x%02x\r\n", ret);
       }
 
 
@@ -872,7 +872,7 @@ void updateDIService(devInfService_Type* devInf)
 
       if(ret != BLE_STATUS_SUCCESS)
       {
-        printf("Failed to update (FIRMWARE NUMBER): 0x%02x\r\n", ret);
+        BLUENRG_PRINTF("Failed to update (FIRMWARE NUMBER): 0x%02x\r\n", ret);
       }
 
 
@@ -888,7 +888,7 @@ void updateDIService(devInfService_Type* devInf)
 
       if(ret != BLE_STATUS_SUCCESS)
       {
-        printf("Failed to update (SOFTWARE NUMBER): 0x%02x\r\n", ret);
+        BLUENRG_PRINTF("Failed to update (SOFTWARE NUMBER): 0x%02x\r\n", ret);
       }
 
       ret = aci_gatt_update_char_value_ext(
@@ -903,7 +903,7 @@ void updateDIService(devInfService_Type* devInf)
 
       if(ret != BLE_STATUS_SUCCESS)
       {
-        printf("Failed to update (PnP ID): 0x%02x\r\n", ret);
+        BLUENRG_PRINTF("Failed to update (PnP ID): 0x%02x\r\n", ret);
       }
 }
 

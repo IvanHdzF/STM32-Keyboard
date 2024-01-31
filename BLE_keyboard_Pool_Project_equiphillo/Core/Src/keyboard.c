@@ -69,7 +69,7 @@ void processInputData(uint8_t* data_buffer, uint8_t Nb_bytes)
     keys[0] = 0x00;
       ret = hidSendReport(0, INPUT_REPORT, sizeof(keys), keys);
       if (ret != BLE_STATUS_SUCCESS)
-        printf("Error during send the report %02x\n", ret);
+        BLUENRG_PRINTF("Error during send the report %02x\n", ret);
       keys[0] = 0;
       keys[offset] = 0;
       nmbTimes = 0;
@@ -147,7 +147,7 @@ uint8_t hidSendReport(uint8_t id, uint8_t type, uint8_t reportLen, uint8_t *repo
 	uint8_t ret = aci_gatt_update_char_value(hid_service_handle,input_report_char_handle,0,reportLen,reportData);
 	if (ret==BLE_STATUS_SUCCESS)
 	{
-		printf("Si se pudo!!!!! :) \r\n");
+		BLUENRG_PRINTF("Si se pudo!!!!! :) \r\n");
 	}
     return ret;
 }

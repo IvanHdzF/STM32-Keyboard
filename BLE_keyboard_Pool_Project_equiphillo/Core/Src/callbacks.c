@@ -36,9 +36,9 @@ void APP_UserEvtRx(void *pData)
 
     uint32_t i;
     hci_spi_pckt *hci_pckt =(hci_spi_pckt *)pData;
-    //printf("PACKET TYPE: %d \r\n", hci_pckt->type);
+    //BLUENRG_PRINTF("PACKET TYPE: %d \r\n", hci_pckt->type);
    // hci_event_pckt* event_pckt = (hci_event_pckt*)hci_pckt->data;
-    //printf("EVENT TYPE: %d \r\n", event_pckt->evt);
+    //BLUENRG_PRINTF("EVENT TYPE: %d \r\n", event_pckt->evt);
     if(hci_pckt->type==HCI_EVENT_PKT)
         {
 
@@ -56,7 +56,7 @@ void APP_UserEvtRx(void *pData)
                     if(evt->subevent ==hci_le_meta_events_table[i].evt_code)
                     {
                  /*       if (APP_FLAG(CONNECTED) {
-                            printf("HCI_EVENT_PKT: EVT_LE_META_EVENT: %d \r\n", i);
+                            BLUENRG_PRINTF("HCI_EVENT_PKT: EVT_LE_META_EVENT: %d \r\n", i);
                         }*/
                         hci_le_meta_events_table[i].process((void *)evt->data);
                     }
@@ -71,7 +71,7 @@ void APP_UserEvtRx(void *pData)
                     if(blue_evt->ecode==hci_vendor_specific_events_table[i].evt_code)
                         {
                   /*      if (APP_FLAG(CONNECTED) {
-                            printf("HCI_EVENT_PKT: EVT_VENDOR: %d \r\n", i);
+                            BLUENRG_PRINTF("HCI_EVENT_PKT: EVT_VENDOR: %d \r\n", i);
                         }
                         */
                         hci_vendor_specific_events_table[i].process((void*)blue_evt->data);
@@ -89,7 +89,7 @@ void APP_UserEvtRx(void *pData)
                         {
                     /*
                      *  if (APP_FLAG(CONNECTED) {
-                            printf("OTHER: OTHER: %d \r\n", i);
+                            BLUENRG_PRINTF("OTHER: OTHER: %d \r\n", i);
                         }
 
                         */
@@ -186,7 +186,7 @@ void hci_le_connection_complete_event(uint8_t Status,
   connection_handle = Connection_Handle;
 
   APP_FLAG_SET(CONNECTED);
-  printf("CONNECTED!!!___________xS \r\n");
+  BLUENRG_PRINTF("CONNECTED!!!___________xS \r\n");
 
   discovery.device_state = INIT_STATE;
 
@@ -226,7 +226,7 @@ void hci_disconnection_complete_event(uint8_t Status,
   APP_FLAG_CLEAR(END_READ_RX_CHAR_HANDLE);
   APP_FLAG_CLEAR(TX_BUFFER_FULL);
 
-  printf("Disconnection with reason: 0x%02X\r\n", Reason);
+  BLUENRG_PRINTF("Disconnection with reason: 0x%02X\r\n", Reason);
   Reset_DiscoveryContext();
 
 } /* end hci_disconnection_complete_event() */
@@ -307,10 +307,10 @@ void aci_gatt_notification_event(uint16_t Connection_Handle,
                                  uint8_t Attribute_Value_Length,
                                  uint8_t Attribute_Value[])
 {
-  printf("____aci_gatt_notification_event with output_report_char_handle %d and Attribute_Handle %d \r\n", output_report_char_handle, Attribute_Handle);
+  BLUENRG_PRINTF("____aci_gatt_notification_event with output_report_char_handle %d and Attribute_Handle %d \r\n", output_report_char_handle, Attribute_Handle);
   if (Attribute_Handle == output_report_char_handle + 1)
   {
-    printf("____ENTERED TO RECEIVE DATA \n");
+    BLUENRG_PRINTF("____ENTERED TO RECEIVE DATA \n");
     receiveData(Attribute_Value, Attribute_Value_Length);
   }
 
@@ -449,7 +449,7 @@ void BLE_Profile_Add_Advertisment_Service_UUID(uint16_t servUUID)
 
 void Attribute_Modified_CB(uint16_t handle, uint8_t data_length, uint8_t *att_data)
 {
-  printf("Entered Attribute_Modified_CB with %d\r\n",handle);
+  BLUENRG_PRINTF("Entered Attribute_Modified_CB with %d\r\n",handle);
   if(handle == output_report_char_handle + 1)
   {
     receiveData(att_data, data_length);
@@ -458,13 +458,13 @@ void Attribute_Modified_CB(uint16_t handle, uint8_t data_length, uint8_t *att_da
   {
     if(att_data[0] == 0x01)
     {
-      printf("NOTIFICATIONS_ENABLED\r\n");
+      BLUENRG_PRINTF("NOTIFICATIONS_ENABLED\r\n");
 
       APP_FLAG_SET(NOTIFICATIONS_ENABLED);
     }
     else if(att_data[0] == 0x00)
     {
-      printf("NOTIFICATIONS_DISABLED\r\n");
+      BLUENRG_PRINTF("NOTIFICATIONS_DISABLED\r\n");
 
       APP_FLAG_CLEAR(NOTIFICATIONS_ENABLED);
     }
