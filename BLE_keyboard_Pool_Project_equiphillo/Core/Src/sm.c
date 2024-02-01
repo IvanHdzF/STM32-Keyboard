@@ -11,6 +11,7 @@
 #include "services.h"
 #include "callbacks.h"
 #include "keyboard.h"
+#include "SerialComs.h"
 
 
 
@@ -30,12 +31,21 @@ extern uint16_t device_role;
 extern discoveryContext_t discovery;
 extern uint8_t advtServUUID[100];
 extern uint8_t local_name[];
+extern uint8_t receivedData;
 
 uint8_t Local_Name_Length = 15;
 
 void BLE_Process(void)
 {
-	uint8_t data[] = "S";
+
+
+
+	uint8_t data[] = {receivedData};
+	//uint8_t data[] = "s";
+
+
+
+
 	hci_user_evt_proc();
 
 	if (APP_FLAG(SET_CONNECTABLE))
@@ -67,8 +77,8 @@ void BLE_Process(void)
 	}
 	if (APP_FLAG(CONNECTED) && APP_FLAG(NOTIFICATIONS_ENABLED))
 	{
-		BLUENRG_PRINTF("Trying to print smth\r\n");
-		processInputData(data, sizeof(data));
+		//BLUENRG_PRINTF("Trying to print smth\r\n");
+		//processInputData(data, sizeof(data));
 		//HAL_GPIO_TogglePin(GPIOA, LED_Pin);
 		HAL_Delay(1000);
 	}

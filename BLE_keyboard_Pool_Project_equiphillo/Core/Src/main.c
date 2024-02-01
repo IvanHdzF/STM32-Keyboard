@@ -25,6 +25,7 @@
 //#include "app_bluenrg.h"
 #include "Init.h"
 #include "stdio.h"
+#include "SerialComs.h"
 #include "sm.h"
 
 
@@ -56,6 +57,7 @@ int __io_putchar (int ch)
 	//HAL_UART_Transmit(&huart2,((uint8_t *)ch),1,100);
 	return ch;
 	}
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -92,6 +94,8 @@ int main(void)
 
   /* Configure the system clock */
   SystemClock_Config();
+  MX_USART2_UART_Init();
+  SerialComInit(&huart2);
 
   /* USER CODE BEGIN SysInit */
 
@@ -99,7 +103,7 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
-  MX_USART2_UART_Init();
+
   /* USER CODE BEGIN 2 */
   //bluenrg_init();
   Init();
@@ -119,7 +123,7 @@ int main(void)
   {
     /* USER CODE END WHILE */
 
-    /* USER CODE BEGIN 3 */
+    /* 112212212USER CODE BEGIN 3 */
 
 	  /*
 	     * process BLE

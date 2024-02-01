@@ -41,8 +41,6 @@ void APP_UserEvtRx(void *pData)
     //BLUENRG_PRINTF("EVENT TYPE: %d \r\n", event_pckt->evt);
     if(hci_pckt->type==HCI_EVENT_PKT)
         {
-
-
         //Get data from packet
         hci_event_pckt *event_pckt =(hci_event_pckt*)hci_pckt->data;
         //process meta data
