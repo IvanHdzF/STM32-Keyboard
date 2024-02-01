@@ -85,6 +85,7 @@ void processInputData(uint8_t* data_buffer, uint8_t Nb_bytes)
 
 uint8_t hid_keyboard_map(uint8_t charac, uint8_t *upperCase)
 {
+	printf("*");
   uint8_t hidValue, i;
 
   hidValue = 0;
@@ -118,6 +119,7 @@ uint8_t hid_keyboard_map(uint8_t charac, uint8_t *upperCase)
       if (lookupTable[i].key == charac) {
         *upperCase = lookupTable[i].hid[0];
         hidValue = lookupTable[i].hid[1];
+        printf("lookup i>%d charac>%d\r\n",i,charac);
         break;
       }
     }
@@ -126,15 +128,19 @@ uint8_t hid_keyboard_map(uint8_t charac, uint8_t *upperCase)
   switch(charac) {
   case RETURN:
     hidValue = 0x28;
+    printf("RETURN\r\n");
     break;
   case BACKSPACE:
     hidValue = 0x02A;
+    printf("BACKSPACE\r\n");
     break;
   case SPACE:
     hidValue = 0x2C;
+    printf("SPACE\r\n");
     break;
   case TAB:
     hidValue = 0x2B;
+    printf("TAB\r\n");
     break;
   }
 

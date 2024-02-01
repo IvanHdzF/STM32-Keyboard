@@ -17,7 +17,7 @@
 #define CHAR_a     0x61
 #define CHAR_z     0x7A
 #define RETURN     0x0D
-#define BACKSPACE  0x08
+#define BACKSPACE  0X7F
 #define TAB        0x09
 #define SPACE      0x20
 #define IDLE_CONNECTION_TIMEOUT (120*1000) // 2 min
