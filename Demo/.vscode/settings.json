@@ -1,0 +1,7 @@
+{
+    "files.associations": {
+        "freertos_os2.h": "c",
+        "keyboard.h": "c",
+        "main.h": "c"
+    }
+}

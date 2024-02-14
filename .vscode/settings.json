@@ -1,0 +1,7 @@
+{
+    "files.associations": {
+        "init.h": "c",
+        "sm.h": "c",
+        "kbd_process.h": "c"
+    }
+}
