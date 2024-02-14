@@ -11,6 +11,9 @@
 #include "StateMachine.h"
 #include "kbd_process.h"
 
+#include "FreeRTOS.h"
+#include "task.h"
+
 // Buffer to store received data
 #define RX_BUFFER_SIZE 		100
 
@@ -76,7 +79,7 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 
 		// Set flags for event
 		eventFlags = osEventFlagsSet(flagsId, 0x00000001U);
-		osDelay(2U);
+		//osDelay(2U);
 
 		// Start a new reception
 		HAL_UART_Receive_IT(uart_Port, &rx_buffer[rx_index], 1);
@@ -93,9 +96,12 @@ void messageQ_TimerCallback()
 		for(int i = 0; i < messagesCount; i++)
 		{
 			osMessageQueueGet(mssgQ, &mssgQ_buffer[i], 0, 0);
-			HAL_UART_Transmit(uart_Port, mssgQ_buffer, 1, HAL_MAX_DELAY);
-			processInputData(mssgQ_buffer, 1);
+			//HAL_UART_Transmit(uart_Port, mssgQ_buffer, 1, HAL_MAX_DELAY);
+			
 		}
+		taskENTER_CRITICAL();
+		processInputData(mssgQ_buffer, messagesCount);
+		taskEXIT_CRITICAL();
 
 		// Reset cycles to activate sleep mode
 		idleCycles = 0;

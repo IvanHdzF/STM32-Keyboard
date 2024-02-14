@@ -79,7 +79,7 @@ void BLE_Process(void)
 		//status = osMessageQueueGet(mssgQ, &rx_buffer[rx_index], 0, 0);
 		//processInputData(data, sizeof(data));
 		//HAL_GPIO_TogglePin(GPIOA, LED_Pin);
-		osDelay(1000);
+		//osDelay(1000);
 	}
 }
 
