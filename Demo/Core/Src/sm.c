@@ -13,7 +13,7 @@
 #include "kbd_process.h"
 #include "Keyboard.h"
 #include "cmsis_os2.h"
-
+#include "hci.h"
 
 
 
@@ -31,18 +31,21 @@ extern uint16_t hid_service_handle, protocol_mode_char_handle;
 extern uint16_t device_role;
 extern discoveryContext_t discovery;
 extern uint8_t advtServUUID[100];
+extern uint8_t advtServUUIDlen;
 extern uint8_t local_name[];
 extern uint8_t receivedData;
 
-uint8_t Local_Name_Length = 15;
+extern uint16_t input_report_char_handle;
+extern uint16_t output_report_char_handle;
+
+uint8_t Local_Name_Length = 13;
 
 void BLE_Process(void)
 {
-
+    uint8_t notifications_enabled_val=0;
+    uint16_t sizeNotifications_enabled_val=sizeof(notifications_enabled_val);
+    uint8_t ret;
 	//uint8_t data[] = "s";
-
-
-
 
 	hci_user_evt_proc();
 
@@ -66,20 +69,36 @@ void BLE_Process(void)
 				   mtu_exchanged, mtu_exchanged_wait);
 
 			mtu_exchanged_wait = 1;
-			uint8_t ret = aci_gatt_exchange_config(connection_handle);
+			ret = aci_gatt_exchange_config(connection_handle);
 			if (ret != BLE_STATUS_SUCCESS)
 			{
 				BLUENRG_PRINTF("aci_gatt_exchange_configuration error 0x%02x\r\n", ret);
 			}
+            
 		}
+        osDelay(1000);
+        
+        
+        ret = aci_gatt_read_handle_value(input_report_char_handle + 2,0,sizeNotifications_enabled_val,&sizeNotifications_enabled_val,&sizeNotifications_enabled_val,&notifications_enabled_val);
+        if (ret != BLE_STATUS_SUCCESS) {
+            printf(" Unable to read data from device\r\n");
+        }
+        printf("NOTIFICATIONS: %d\n\r",notifications_enabled_val);
+
+        ret = aci_gatt_read_handle_value(output_report_char_handle + 1,0,sizeNotifications_enabled_val,&sizeNotifications_enabled_val,&sizeNotifications_enabled_val,&notifications_enabled_val);
+        if (ret != BLE_STATUS_SUCCESS) {
+            printf(" Unable to read data from device\r\n");
+        }
+        printf("____Output Report: %d\n\r",notifications_enabled_val);
+        
 	}
-	if (APP_FLAG(CONNECTED) && APP_FLAG(NOTIFICATIONS_ENABLED))
+	if (APP_FLAG(CONNECTED) && notifications_enabled_val)
 	{
 		BLUENRG_PRINTF("Trying to print smth\r\n");
 		//status = osMessageQueueGet(mssgQ, &rx_buffer[rx_index], 0, 0);
 		//processInputData(data, sizeof(data));
 		//HAL_GPIO_TogglePin(GPIOA, LED_Pin);
-		//osDelay(1000);
+		
 	}
 }
 
@@ -88,7 +107,7 @@ void BLE_Process(void)
 void Connection_StateMachine(void)
 {
     uint8_t ret;
-
+ 
     switch (discovery.device_state)
     {
     case (INIT_STATE):
@@ -274,23 +293,21 @@ void Connection_StateMachine(void)
 uint8_t hidSetDeviceDiscoverable(uint8_t mode, uint8_t nameLen, uint8_t *name)
 {
   uint8_t ret;
-  advtServUUID[0] = AD_TYPE_16_BIT_SERV_UUID;
+  advtServUUID[0] = AD_TYPE_16_BIT_SERV_UUID_CMPLT_LIST;
 
   // advtServUUID[1]=HUMAN_INTERFACE_DEVICE_SERVICE_UUID;
   // advtServUUID[2]=BATTERY_SERVICE_SERVICE_UUID;
   // advtServUUID[3]=DEVICE_INFORMATION_SERVICE_UUID;
   // advtServUUID[100]=0x1111;
 
-  BLE_Profile_Add_Advertisment_Service_UUID(HUMAN_INTERFACE_DEVICE_SERVICE_UUID);
-  BLE_Profile_Add_Advertisment_Service_UUID(BATTERY_SERVICE_SERVICE_UUID);
-  BLE_Profile_Add_Advertisment_Service_UUID(DEVICE_INFORMATION_SERVICE_UUID);
+ 
   if (mode == LIMITED_DISCOVERABLE_MODE)
   {
     BLUENRG_PRINTF("Set limited Discoverable Mode.\n");
     ret = aci_gap_set_limited_discoverable(ADV_IND,
                                            (ADV_INTERVAL_MIN_MS * 1000) / 625, (ADV_INTERVAL_MAX_MS * 1000) / 625,
                                            PUBLIC_ADDR, NO_WHITE_LIST_USE,
-                                           nameLen, name, 0, NULL, 0, 0);
+                                           nameLen, name, advtServUUIDlen, advtServUUID, 0, 0);
     if (ret != BLE_STATUS_SUCCESS)
     {
       BLUENRG_PRINTF("aci_gap_set_discoverable() failed: 0x%02x\r\n", ret);
@@ -307,7 +324,7 @@ uint8_t hidSetDeviceDiscoverable(uint8_t mode, uint8_t nameLen, uint8_t *name)
     ret = aci_gap_set_discoverable(ADV_IND,
                                    (ADV_INTERVAL_MIN_MS * 1000) / 625, (ADV_INTERVAL_MAX_MS * 1000) / 625,
                                    STATIC_RANDOM_ADDR, NO_WHITE_LIST_USE,
-                                   nameLen, name, 0, NULL, 0, 0);
+                                   nameLen, name, advtServUUIDlen, advtServUUID, 0, 0);
     if (ret != BLE_STATUS_SUCCESS)
     {
       // BLUENRG_PRINTF("aci_gap_set_discoverable() failed: 0x%02x\r\n",ret);

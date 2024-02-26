@@ -14,6 +14,7 @@
 #include "ble_types.h"
 #include "services.h"
 #include "Init.h"
+#include "hci.h"
 
 /*Structures ---------------------------------------------------------------------*/
 
@@ -26,7 +27,10 @@ void Init()
 {
 
 	uint8_t ret;
-
+	printf("\r\n");
+	printf(" ----------------------------------------------\r\n");
+	printf(" ----------------------------------------------\r\n");
+	printf(" ----------------------------------------------\r\n");
 	/*Initializing and Reseting HCI*/
 	hci_init(APP_UserEvtRx, NULL);
 	hci_reset();
@@ -66,10 +70,10 @@ uint8_t Configure_HidPeripheral(void)
 	}
 
 	/* Set the HID Peripheral Security */
-	ret = hidSetDeviceSecurty(TRUE, USE_FIXED_PIN_FOR_PAIRING, 123456);
+	ret = hidSetDeviceSecurity(TRUE, USE_FIXED_PIN_FOR_PAIRING, 123456);
 	if (ret != BLE_STATUS_SUCCESS)
 	{
-		BLUENRG_PRINTF("Error in hidSetDeviceSecurty() 0x%02x\n", ret);
+		BLUENRG_PRINTF("Error in hidSetDeviceSecurity() 0x%02x\n", ret);
 		return ret;
 	}
 
@@ -115,6 +119,9 @@ uint8_t Configure_HidPeripheral(void)
 		return ret;
 	  }
 	  */
+	BLE_Profile_Add_Advertisment_Service_UUID(HUMAN_INTERFACE_DEVICE_SERVICE_UUID);
+  	BLE_Profile_Add_Advertisment_Service_UUID(BATTERY_SERVICE_SERVICE_UUID);
+  	BLE_Profile_Add_Advertisment_Service_UUID(DEVICE_INFORMATION_SERVICE_UUID);
 
 	BLUENRG_PRINTF("HID Keyboard Configured\r\n");
 	return BLE_STATUS_SUCCESS;
@@ -122,7 +129,7 @@ uint8_t Configure_HidPeripheral(void)
 
 
 
-uint8_t hidSetDeviceSecurty(uint8_t MITM_Mode, uint8_t fixedPinUsed, uint32_t fixedPinValue)
+uint8_t hidSetDeviceSecurity(uint8_t MITM_Mode, uint8_t fixedPinUsed, uint32_t fixedPinValue)
 {
   if (!MITM_Mode)
   {
@@ -130,9 +137,11 @@ uint8_t hidSetDeviceSecurty(uint8_t MITM_Mode, uint8_t fixedPinUsed, uint32_t fi
   }
   uint8_t ret;
   ret = aci_gap_set_authentication_requirement(BONDING,
-                                               //MITM_PROTECTION_REQUIRED,
-                                              MITM_PROTECTION_NOT_REQUIRED,
-                                              SC_IS_NOT_SUPPORTED,
+                                               MITM_PROTECTION_REQUIRED,
+                                              //MITM_PROTECTION_NOT_REQUIRED,
+											  SC_IS_SUPPORTED,
+                                              //SC_IS_NOT_SUPPORTED,
+											  //KEYPRESS_IS_SUPPORTED,
                                                KEYPRESS_IS_NOT_SUPPORTED,
                                                7,
                                                16,
@@ -180,7 +189,7 @@ uint8_t hidDevice_Init(uint8_t IO_Capability, connParam_Type connParam,
 	ret = aci_hal_write_config_data(CONFIG_DATA_PUBADDR_OFFSET, CONFIG_DATA_PUBADDR_LEN, addr);
 	if (ret != BLE_STATUS_SUCCESS)
 	{
-		// BLUENRG_PRINTF("Setting BD_ADDR failed 0x%02x\r\n", ret);
+		BLUENRG_PRINTF("Setting BD_ADDR failed 0x%02x\r\n", ret);
 		return ret;
 	}
 	else
@@ -192,6 +201,54 @@ uint8_t hidDevice_Init(uint8_t IO_Capability, connParam_Type connParam,
 		}
 		BLUENRG_PRINTF("%02X\r\n", addr[0]);
 	}
+
+	/* Read the device public address */
+	uint8_t valueRead[16];
+	uint8_t valueLen=CONFIG_DATA_PUBADDR_LEN;
+	aci_hal_read_config_data(CONFIG_DATA_PUBADDR_OFFSET, &valueLen, (uint8_t *)valueRead);
+	BLUENRG_PRINTF("aci_hal_read_config_data() addr valueRead:  \r\n");
+	for (uint8_t i=0; i < CONFIG_DATA_PUBADDR_LEN ;i++)
+	{
+		BLUENRG_PRINTF("%d",valueRead[i]);
+	}
+	BLUENRG_PRINTF("\n\r");
+
+	valueLen=CONFIG_DATA_DIV_LEN;
+	aci_hal_read_config_data(CONFIG_DATA_DIV_OFFSET, &valueLen, (uint8_t *)valueRead);
+	BLUENRG_PRINTF("aci_hal_read_config_data() DIV valueRead:\r\n");
+	for (uint8_t i=0; i < CONFIG_DATA_DIV_LEN ;i++)
+	{
+		BLUENRG_PRINTF("%d",valueRead[i]);
+	}
+	BLUENRG_PRINTF("\n\r");
+
+	valueLen=CONFIG_DATA_ER_LEN;
+	aci_hal_read_config_data(CONFIG_DATA_ER_OFFSET, &valueLen, (uint8_t *)valueRead);
+	BLUENRG_PRINTF("aci_hal_read_config_data() ER  valueRead:\r\n");
+	for (uint8_t i=0; i < CONFIG_DATA_ER_LEN ;i++)
+	{
+		BLUENRG_PRINTF("%d",valueRead[i]);
+	}
+	BLUENRG_PRINTF("\n\r");
+
+	valueLen=CONFIG_DATA_IR_LEN;
+	aci_hal_read_config_data(CONFIG_DATA_IR_OFFSET, &valueLen, (uint8_t *)valueRead);
+	BLUENRG_PRINTF("aci_hal_read_config_data() IR  valueRead:\r\n");
+	for (uint8_t i=0; i < CONFIG_DATA_IR_LEN ;i++)
+	{
+		BLUENRG_PRINTF("%d",valueRead[i]);
+	}
+	BLUENRG_PRINTF("\n\r");
+
+	valueLen=CONFIG_DATA_LL_WITHOUT_HOST_LEN;
+	aci_hal_read_config_data(CONFIG_DATA_LL_WITHOUT_HOST, &valueLen, (uint8_t *)valueRead);
+	BLUENRG_PRINTF("aci_hal_read_config_data() LL_ONLY valueRead:\r\n");
+	for (uint8_t i=0; i < CONFIG_DATA_LL_WITHOUT_HOST_LEN ;i++)
+	{
+		BLUENRG_PRINTF("%d",valueRead[i]);
+	}
+	BLUENRG_PRINTF("\n\r");
+
 
 	/* GATT Init */
 	ret = aci_gatt_init();
@@ -219,5 +276,11 @@ uint8_t hidDevice_Init(uint8_t IO_Capability, connParam_Type connParam,
 	{
 		BLUENRG_PRINTF("GAP_set_io failed: 0x%02x\r\n", ret);
 	}
+
+	// ret = aci_gap_configure_whitelist();
+    // if(ret!=BLE_STATUS_SUCCESS)
+	// {
+	// 	BLUENRG_PRINTF("aci_gap_configure_whitelist failed: 0x%02x\r\n", ret);
+	// }
 	return ret;
 }
