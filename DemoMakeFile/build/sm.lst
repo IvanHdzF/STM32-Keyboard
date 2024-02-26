@@ -1,0 +1,2067 @@
+ARM GAS  C:\Users\IAHERN~1\AppData\Local\Temp\ccTG0pDq.s 			page 1
+
+
+   1              		.cpu cortex-m4
+   2              		.arch armv7e-m
+   3              		.fpu fpv4-sp-d16
+   4              		.eabi_attribute 27, 1
+   5              		.eabi_attribute 28, 1
+   6              		.eabi_attribute 20, 1
+   7              		.eabi_attribute 21, 1
+   8              		.eabi_attribute 23, 3
+   9              		.eabi_attribute 24, 1
+  10              		.eabi_attribute 25, 1
+  11              		.eabi_attribute 26, 1
+  12              		.eabi_attribute 30, 1
+  13              		.eabi_attribute 34, 1
+  14              		.eabi_attribute 18, 4
+  15              		.file	"sm.c"
+  16              		.text
+  17              	.Ltext0:
+  18              		.cfi_sections	.debug_frame
+  19              		.file 1 "Core/Src/sm.c"
+  20              		.section	.rodata.hidSetDeviceDiscoverable.str1.4,"aMS",%progbits,1
+  21              		.align	2
+  22              	.LC0:
+  23 0000 53657420 		.ascii	"Set limited Discoverable Mode.\000"
+  23      6C696D69 
+  23      74656420 
+  23      44697363 
+  23      6F766572 
+  24 001f 00       		.align	2
+  25              	.LC1:
+  26 0020 6163695F 		.ascii	"aci_gap_set_discoverable() failed: 0x%02x\015\012\000"
+  26      6761705F 
+  26      7365745F 
+  26      64697363 
+  26      6F766572 
+  27              		.align	2
+  28              	.LC2:
+  29 004c 6163695F 		.ascii	"aci_gap_set_discoverable() LIMITED --> SUCCESS\015\000"
+  29      6761705F 
+  29      7365745F 
+  29      64697363 
+  29      6F766572 
+  30              		.align	2
+  31              	.LC3:
+  32 007c 6163695F 		.ascii	"aci_gap_set_discoverable() GENERAL--> SUCCESS\015\000"
+  32      6761705F 
+  32      7365745F 
+  32      64697363 
+  32      6F766572 
+  33 00ab 00       		.align	2
+  34              	.LC4:
+  35 00ac 57726F6E 		.ascii	"Wrong mode, device couldn't set as discoverable.\000"
+  35      67206D6F 
+  35      64652C20 
+  35      64657669 
+  35      63652063 
+  36              		.section	.text.hidSetDeviceDiscoverable,"ax",%progbits
+  37              		.align	1
+ARM GAS  C:\Users\IAHERN~1\AppData\Local\Temp\ccTG0pDq.s 			page 2
+
+
+  38              		.global	hidSetDeviceDiscoverable
+  39              		.syntax unified
+  40              		.thumb
+  41              		.thumb_func
+  43              	hidSetDeviceDiscoverable:
+  44              	.LVL0:
+  45              	.LFB139:
+   1:Core/Src/sm.c **** /*
+   2:Core/Src/sm.c ****  * sm.c
+   3:Core/Src/sm.c ****  *
+   4:Core/Src/sm.c ****  *  Created on: Jan 30, 2024
+   5:Core/Src/sm.c ****  *      Author: smoreno
+   6:Core/Src/sm.c ****  */
+   7:Core/Src/sm.c **** 
+   8:Core/Src/sm.c **** #include "sm.h"
+   9:Core/Src/sm.c **** #include "stdint.h"
+  10:Core/Src/sm.c **** #include "bluenrg1_gap.h"
+  11:Core/Src/sm.c **** #include "services.h"
+  12:Core/Src/sm.c **** #include "callbacks.h"
+  13:Core/Src/sm.c **** #include "kbd_process.h"
+  14:Core/Src/sm.c **** #include "Keyboard.h"
+  15:Core/Src/sm.c **** #include "cmsis_os2.h"
+  16:Core/Src/sm.c **** #include "hci.h"
+  17:Core/Src/sm.c **** 
+  18:Core/Src/sm.c **** 
+  19:Core/Src/sm.c **** 
+  20:Core/Src/sm.c **** 
+  21:Core/Src/sm.c **** volatile int app_flags = SET_CONNECTABLE;
+  22:Core/Src/sm.c **** 
+  23:Core/Src/sm.c **** uint16_t connection_handle=0;
+  24:Core/Src/sm.c **** uint8_t protocolMode = 0;
+  25:Core/Src/sm.c **** uint16_t discovery_time     = 3000;
+  26:Core/Src/sm.c **** uint8_t  mtu_exchanged      = 0;
+  27:Core/Src/sm.c **** uint8_t  mtu_exchanged_wait = 0;
+  28:Core/Src/sm.c **** uint8_t protocolModeSet = 0;
+  29:Core/Src/sm.c **** uint16_t write_char_len;
+  30:Core/Src/sm.c **** extern uint16_t hid_service_handle, protocol_mode_char_handle;
+  31:Core/Src/sm.c **** extern uint16_t device_role;
+  32:Core/Src/sm.c **** extern discoveryContext_t discovery;
+  33:Core/Src/sm.c **** extern uint8_t advtServUUID[100];
+  34:Core/Src/sm.c **** extern uint8_t advtServUUIDlen;
+  35:Core/Src/sm.c **** extern uint8_t local_name[];
+  36:Core/Src/sm.c **** extern uint8_t receivedData;
+  37:Core/Src/sm.c **** 
+  38:Core/Src/sm.c **** extern uint16_t input_report_char_handle;
+  39:Core/Src/sm.c **** extern uint16_t output_report_char_handle;
+  40:Core/Src/sm.c **** 
+  41:Core/Src/sm.c **** uint8_t Local_Name_Length = 13;
+  42:Core/Src/sm.c **** 
+  43:Core/Src/sm.c **** void BLE_Process(void)
+  44:Core/Src/sm.c **** {
+  45:Core/Src/sm.c ****     uint8_t notifications_enabled_val=0;
+  46:Core/Src/sm.c ****     uint16_t sizeNotifications_enabled_val=sizeof(notifications_enabled_val);
+  47:Core/Src/sm.c ****     uint8_t ret;
+  48:Core/Src/sm.c **** 	//uint8_t data[] = "s";
+  49:Core/Src/sm.c **** 
+  50:Core/Src/sm.c **** 	hci_user_evt_proc();
+ARM GAS  C:\Users\IAHERN~1\AppData\Local\Temp\ccTG0pDq.s 			page 3
+
+
+  51:Core/Src/sm.c **** 
+  52:Core/Src/sm.c **** 	if (APP_FLAG(SET_CONNECTABLE))
+  53:Core/Src/sm.c **** 	{
+  54:Core/Src/sm.c **** 		Connection_StateMachine();
+  55:Core/Src/sm.c **** 	}
+  56:Core/Src/sm.c **** 
+  57:Core/Src/sm.c **** 	if (APP_FLAG(CONNECTED) && !protocolModeSet)
+  58:Core/Src/sm.c **** 	{
+  59:Core/Src/sm.c **** 		protocolMode = REPORT_PROTOCOL_MODE;
+  60:Core/Src/sm.c **** 		BLUENRG_PRINTF("protocol Mode was set to 1\r\n");
+  61:Core/Src/sm.c **** 		aci_gatt_update_char_value(hid_service_handle, protocol_mode_char_handle, 0, 1, &protocolMode);
+  62:Core/Src/sm.c **** 		protocolModeSet = 1;
+  63:Core/Src/sm.c **** 	}
+  64:Core/Src/sm.c **** 	if (APP_FLAG(CONNECTED))
+  65:Core/Src/sm.c **** 	{
+  66:Core/Src/sm.c **** 		if ((mtu_exchanged == 0) && (mtu_exchanged_wait == 0))
+  67:Core/Src/sm.c **** 		{
+  68:Core/Src/sm.c **** 			BLUENRG_PRINTF("ROLE SLAVE (mtu_exchanged %d, mtu_exchanged_wait %d)\r\n",
+  69:Core/Src/sm.c **** 				   mtu_exchanged, mtu_exchanged_wait);
+  70:Core/Src/sm.c **** 
+  71:Core/Src/sm.c **** 			mtu_exchanged_wait = 1;
+  72:Core/Src/sm.c **** 			ret = aci_gatt_exchange_config(connection_handle);
+  73:Core/Src/sm.c **** 			if (ret != BLE_STATUS_SUCCESS)
+  74:Core/Src/sm.c **** 			{
+  75:Core/Src/sm.c **** 				BLUENRG_PRINTF("aci_gatt_exchange_configuration error 0x%02x\r\n", ret);
+  76:Core/Src/sm.c **** 			}
+  77:Core/Src/sm.c ****             
+  78:Core/Src/sm.c **** 		}
+  79:Core/Src/sm.c ****         osDelay(1000);
+  80:Core/Src/sm.c ****         
+  81:Core/Src/sm.c ****         
+  82:Core/Src/sm.c ****         ret = aci_gatt_read_handle_value(input_report_char_handle + 2,0,sizeNotifications_enabled_v
+  83:Core/Src/sm.c ****         if (ret != BLE_STATUS_SUCCESS) {
+  84:Core/Src/sm.c ****             printf(" Unable to read data from device\r\n");
+  85:Core/Src/sm.c ****         }
+  86:Core/Src/sm.c ****         printf("NOTIFICATIONS: %d\n\r",notifications_enabled_val);
+  87:Core/Src/sm.c **** 
+  88:Core/Src/sm.c ****         ret = aci_gatt_read_handle_value(output_report_char_handle + 1,0,sizeNotifications_enabled_
+  89:Core/Src/sm.c ****         if (ret != BLE_STATUS_SUCCESS) {
+  90:Core/Src/sm.c ****             printf(" Unable to read data from device\r\n");
+  91:Core/Src/sm.c ****         }
+  92:Core/Src/sm.c ****         printf("____Output Report: %d\n\r",notifications_enabled_val);
+  93:Core/Src/sm.c ****         
+  94:Core/Src/sm.c **** 	}
+  95:Core/Src/sm.c **** 	if (APP_FLAG(CONNECTED) && notifications_enabled_val)
+  96:Core/Src/sm.c **** 	{
+  97:Core/Src/sm.c **** 		BLUENRG_PRINTF("Trying to print smth\r\n");
+  98:Core/Src/sm.c **** 		//status = osMessageQueueGet(mssgQ, &rx_buffer[rx_index], 0, 0);
+  99:Core/Src/sm.c **** 		//processInputData(data, sizeof(data));
+ 100:Core/Src/sm.c **** 		//HAL_GPIO_TogglePin(GPIOA, LED_Pin);
+ 101:Core/Src/sm.c **** 		
+ 102:Core/Src/sm.c **** 	}
+ 103:Core/Src/sm.c **** }
+ 104:Core/Src/sm.c **** 
+ 105:Core/Src/sm.c **** 
+ 106:Core/Src/sm.c **** 
+ 107:Core/Src/sm.c **** void Connection_StateMachine(void)
+ARM GAS  C:\Users\IAHERN~1\AppData\Local\Temp\ccTG0pDq.s 			page 4
+
+
+ 108:Core/Src/sm.c **** {
+ 109:Core/Src/sm.c ****     uint8_t ret;
+ 110:Core/Src/sm.c ****  
+ 111:Core/Src/sm.c ****     switch (discovery.device_state)
+ 112:Core/Src/sm.c ****     {
+ 113:Core/Src/sm.c ****     case (INIT_STATE):
+ 114:Core/Src/sm.c ****     {
+ 115:Core/Src/sm.c ****         BLUENRG_PRINTF("INSIDE INIT STATE\r\n");
+ 116:Core/Src/sm.c ****         Reset_DiscoveryContext();
+ 117:Core/Src/sm.c ****         discovery.device_state = START_DISCOVERY_PROC;
+ 118:Core/Src/sm.c ****     }
+ 119:Core/Src/sm.c ****     break; /* end case (INIT_STATE) */
+ 120:Core/Src/sm.c ****     case (START_DISCOVERY_PROC):
+ 121:Core/Src/sm.c ****     {
+ 122:Core/Src/sm.c ****       //  BLUENRG_PRINTF("INSIDE START_DISCOVERY_PROC\r\n");
+ 123:Core/Src/sm.c **** 
+ 124:Core/Src/sm.c ****         /*
+ 125:Core/Src/sm.c ****         ADV_IND,
+ 126:Core/Src/sm.c ****         (ADV_INTERVAL_MIN_MS*1000)/625,
+ 127:Core/Src/sm.c ****         (ADV_INTERVAL_MAX_MS*1000)/625,
+ 128:Core/Src/sm.c ****         */
+ 129:Core/Src/sm.c **** 
+ 130:Core/Src/sm.c **** 
+ 131:Core/Src/sm.c ****         ret = aci_gap_start_general_discovery_proc((ADV_INTERVAL_MIN_MS * 1000) / 625,
+ 132:Core/Src/sm.c ****             (ADV_INTERVAL_MAX_MS * 1000) / 625,
+ 133:Core/Src/sm.c ****             PUBLIC_ADDR,
+ 134:Core/Src/sm.c ****             0x00);
+ 135:Core/Src/sm.c ****         if (ret != BLE_STATUS_SUCCESS)
+ 136:Core/Src/sm.c ****         {
+ 137:Core/Src/sm.c ****             BLUENRG_PRINTF("aci_gap_start_limited_discovery_proc() failed: %02X\r\n", ret);
+ 138:Core/Src/sm.c ****             discovery.device_state = DISCOVERY_ERROR;
+ 139:Core/Src/sm.c ****         }
+ 140:Core/Src/sm.c ****         else
+ 141:Core/Src/sm.c ****         {
+ 142:Core/Src/sm.c ****             BLUENRG_PRINTF("aci_gap_start_limited_discovery_proc OK\r\n");
+ 143:Core/Src/sm.c ****             discovery.startTime = HAL_GetTick();
+ 144:Core/Src/sm.c ****             discovery.check_disc_proc_timer = TRUE;
+ 145:Core/Src/sm.c ****             discovery.check_disc_mode_timer = FALSE;
+ 146:Core/Src/sm.c ****             discovery.device_state = WAIT_TIMER_EXPIRED;
+ 147:Core/Src/sm.c ****         }
+ 148:Core/Src/sm.c ****     }
+ 149:Core/Src/sm.c ****     break;/* end case (START_DISCOVERY_PROC) */
+ 150:Core/Src/sm.c ****     case (WAIT_TIMER_EXPIRED):
+ 151:Core/Src/sm.c ****     {
+ 152:Core/Src/sm.c ****         /* Verify if startTime check has to be done  since discovery procedure is ongoing */
+ 153:Core/Src/sm.c ****         if (discovery.check_disc_proc_timer == TRUE)
+ 154:Core/Src/sm.c ****         {
+ 155:Core/Src/sm.c ****             /* check startTime value */
+ 156:Core/Src/sm.c ****             if (HAL_GetTick() - discovery.startTime > discovery_time)
+ 157:Core/Src/sm.c ****             {
+ 158:Core/Src/sm.c ****                 discovery.check_disc_proc_timer = FALSE;
+ 159:Core/Src/sm.c ****                 discovery.startTime = 0;
+ 160:Core/Src/sm.c ****                 discovery.device_state = DO_TERMINATE_GAP_PROC;
+ 161:Core/Src/sm.c ****             }/* if (HAL_GetTick() - discovery.startTime > discovery_time) */
+ 162:Core/Src/sm.c ****         }
+ 163:Core/Src/sm.c ****         /* Verify if startTime check has to be done  since discovery mode is ongoing */
+ 164:Core/Src/sm.c ****         else if (discovery.check_disc_mode_timer == TRUE)
+ARM GAS  C:\Users\IAHERN~1\AppData\Local\Temp\ccTG0pDq.s 			page 5
+
+
+ 165:Core/Src/sm.c ****         {
+ 166:Core/Src/sm.c ****             /* check startTime value */
+ 167:Core/Src/sm.c ****             if (HAL_GetTick() - discovery.startTime > discovery_time)
+ 168:Core/Src/sm.c ****             {
+ 169:Core/Src/sm.c ****                 discovery.check_disc_mode_timer = FALSE;
+ 170:Core/Src/sm.c ****                 discovery.startTime = 0;
+ 171:Core/Src/sm.c **** 
+ 172:Core/Src/sm.c ****                 /* Discovery mode is ongoing: set non discoverable mode */
+ 173:Core/Src/sm.c ****                 discovery.device_state = DO_NON_DISCOVERABLE_MODE;
+ 174:Core/Src/sm.c **** 
+ 175:Core/Src/sm.c ****             }/* else if (discovery.check_disc_mode_timer == TRUE) */
+ 176:Core/Src/sm.c ****         }/* if ((discovery.check_disc_proc_timer == TRUE) */
+ 177:Core/Src/sm.c ****     }
+ 178:Core/Src/sm.c ****     break; /* end case (WAIT_TIMER_EXPIRED) */
+ 179:Core/Src/sm.c **** 
+ 180:Core/Src/sm.c ****     case (DO_NON_DISCOVERABLE_MODE):
+ 181:Core/Src/sm.c ****     {
+ 182:Core/Src/sm.c ****        // BLUENRG_PRINTF("INSIDE DO_NON_DISCOVERABLE_MODE\r\n");
+ 183:Core/Src/sm.c ****         ret = aci_gap_set_non_discoverable();
+ 184:Core/Src/sm.c ****         if (ret != BLE_STATUS_SUCCESS)
+ 185:Core/Src/sm.c ****         {
+ 186:Core/Src/sm.c ****             BLUENRG_PRINTF("aci_gap_set_non_discoverable() failed: 0x%02x\r\n", ret);
+ 187:Core/Src/sm.c ****             discovery.device_state = DISCOVERY_ERROR;
+ 188:Core/Src/sm.c ****         }
+ 189:Core/Src/sm.c ****         else
+ 190:Core/Src/sm.c ****         {
+ 191:Core/Src/sm.c ****             BLUENRG_PRINTF("aci_gap_set_non_discoverable() OK\r\n");
+ 192:Core/Src/sm.c ****             /* Restart Central discovery procedure */
+ 193:Core/Src/sm.c ****             discovery.device_state = INIT_STATE;
+ 194:Core/Src/sm.c ****         }
+ 195:Core/Src/sm.c ****     }
+ 196:Core/Src/sm.c ****     break; /* end case (DO_NON_DISCOVERABLE_MODE) */
+ 197:Core/Src/sm.c ****     case (DO_TERMINATE_GAP_PROC):
+ 198:Core/Src/sm.c ****     {
+ 199:Core/Src/sm.c ****        // BLUENRG_PRINTF("INSIDE DO_TERMINATE_GAP_PROC\r\n");
+ 200:Core/Src/sm.c ****         /* terminate gap procedure */
+ 201:Core/Src/sm.c ****         ret = aci_gap_terminate_gap_proc(0x02); // GENERAL_DISCOVERY_PROCEDURE
+ 202:Core/Src/sm.c ****         if (ret != BLE_STATUS_SUCCESS)
+ 203:Core/Src/sm.c ****         {
+ 204:Core/Src/sm.c ****             BLUENRG_PRINTF("aci_gap_terminate_gap_procedure() failed: 0x%02x\r\n", ret);
+ 205:Core/Src/sm.c ****             discovery.device_state = DISCOVERY_ERROR;
+ 206:Core/Src/sm.c ****             break;
+ 207:Core/Src/sm.c ****         }
+ 208:Core/Src/sm.c ****         else
+ 209:Core/Src/sm.c ****         {
+ 210:Core/Src/sm.c ****             BLUENRG_PRINTF("aci_gap_terminate_gap_procedure() OK\r\n");
+ 211:Core/Src/sm.c ****             discovery.device_state = WAIT_EVENT; /* wait for GAP procedure complete */
+ 212:Core/Src/sm.c ****         }
+ 213:Core/Src/sm.c ****     }
+ 214:Core/Src/sm.c ****     break; /* end case (DO_TERMINATE_GAP_PROC) */
+ 215:Core/Src/sm.c ****     case (DO_DIRECT_CONNECTION_PROC):
+ 216:Core/Src/sm.c ****     {
+ 217:Core/Src/sm.c ****       //  BLUENRG_PRINTF("INSIDE DO_DIRECT_CONNECTION_PROC\r\n");
+ 218:Core/Src/sm.c ****         BLUENRG_PRINTF("Device Found with address: ");
+ 219:Core/Src/sm.c ****         for (uint8_t i = 5; i > 0; i--)
+ 220:Core/Src/sm.c ****         {
+ 221:Core/Src/sm.c ****             BLUENRG_PRINTF("%02X-", discovery.device_found_address[i]);
+ARM GAS  C:\Users\IAHERN~1\AppData\Local\Temp\ccTG0pDq.s 			page 6
+
+
+ 222:Core/Src/sm.c ****         }
+ 223:Core/Src/sm.c ****         BLUENRG_PRINTF("%02X\r\n", discovery.device_found_address[0]);
+ 224:Core/Src/sm.c ****         /* Do connection with first discovered device */
+ 225:Core/Src/sm.c ****         ret = aci_gap_create_connection(SCAN_P, SCAN_L,
+ 226:Core/Src/sm.c ****             discovery.device_found_address_type, discovery.device_found_address,
+ 227:Core/Src/sm.c ****             PUBLIC_ADDR, 40, 40, 0, 60, 2000, 2000);
+ 228:Core/Src/sm.c ****         if (ret != BLE_STATUS_SUCCESS)
+ 229:Core/Src/sm.c ****         {
+ 230:Core/Src/sm.c ****             BLUENRG_PRINTF("aci_gap_create_connection() failed: 0x%02x\r\n", ret);
+ 231:Core/Src/sm.c ****             discovery.device_state = DISCOVERY_ERROR;
+ 232:Core/Src/sm.c ****         }
+ 233:Core/Src/sm.c ****         else
+ 234:Core/Src/sm.c ****         {
+ 235:Core/Src/sm.c ****             BLUENRG_PRINTF("aci_gap_create_connection() OK\r\n");
+ 236:Core/Src/sm.c ****             discovery.device_state = WAIT_EVENT;
+ 237:Core/Src/sm.c ****         }
+ 238:Core/Src/sm.c ****     }
+ 239:Core/Src/sm.c ****     break; /* end case (DO_DIRECT_CONNECTION_PROC) */
+ 240:Core/Src/sm.c ****     case (WAIT_EVENT):
+ 241:Core/Src/sm.c ****     {
+ 242:Core/Src/sm.c ****     //    BLUENRG_PRINTF("INSIDE WAIT_EVENT\r\n");
+ 243:Core/Src/sm.c ****         discovery.device_state = WAIT_EVENT;
+ 244:Core/Src/sm.c ****     }
+ 245:Core/Src/sm.c ****     break; /* end case (WAIT_EVENT) */
+ 246:Core/Src/sm.c **** 
+ 247:Core/Src/sm.c **** 
+ 248:Core/Src/sm.c **** 
+ 249:Core/Src/sm.c ****     case (ENTER_DISCOVERY_MODE):
+ 250:Core/Src/sm.c ****     {
+ 251:Core/Src/sm.c ****     //    BLUENRG_PRINTF("INSIDE ENTER_DISCOVERY_MODE\r\n");
+ 252:Core/Src/sm.c ****         /* Put Peripheral device in discoverable mode */
+ 253:Core/Src/sm.c **** 
+ 254:Core/Src/sm.c ****         /* disable scan response */
+ 255:Core/Src/sm.c ****         hci_le_set_scan_response_data(0, NULL);
+ 256:Core/Src/sm.c **** 
+ 257:Core/Src/sm.c ****         /*CHANGEEEDDDDDDDDDDDDDDDDDDDDDDDDDDD**/
+ 258:Core/Src/sm.c ****         ret = hidSetDeviceDiscoverable(LIMITED_DISCOVERABLE_MODE, Local_Name_Length, local_name);
+ 259:Core/Src/sm.c ****         /*ret = aci_gap_set_discoverable(ADV_DATA_TYPE, ADV_INTERV_MIN, ADV_INTERV_MAX, PUBLIC_ADDR
+ 260:Core/Src/sm.c ****             NO_WHITE_LIST_USE, sizeof(local_name), local_name, 0, NULL,
+ 261:Core/Src/sm.c ****             0x0, 0x0);*/
+ 262:Core/Src/sm.c **** 
+ 263:Core/Src/sm.c **** 
+ 264:Core/Src/sm.c ****         if (ret != BLE_STATUS_SUCCESS) {
+ 265:Core/Src/sm.c ****             BLUENRG_PRINTF("Error in hidSetDeviceDiscoverable() 0x%02x\n", ret);
+ 266:Core/Src/sm.c ****             discovery.device_state = DISCOVERY_ERROR;
+ 267:Core/Src/sm.c ****         }
+ 268:Core/Src/sm.c ****         else
+ 269:Core/Src/sm.c ****         {
+ 270:Core/Src/sm.c ****             BLUENRG_PRINTF("aci_gap_set_discoverable() OK\r\n");
+ 271:Core/Src/sm.c ****             discovery.startTime = HAL_GetTick();
+ 272:Core/Src/sm.c ****             discovery.check_disc_mode_timer = TRUE;
+ 273:Core/Src/sm.c ****             discovery.check_disc_proc_timer = FALSE;
+ 274:Core/Src/sm.c ****             discovery.device_state = WAIT_TIMER_EXPIRED;
+ 275:Core/Src/sm.c ****         }
+ 276:Core/Src/sm.c ****     }
+ 277:Core/Src/sm.c ****     break; /* end case (ENTER_DISCOVERY_MODE) */
+ 278:Core/Src/sm.c ****     case (DISCOVERY_ERROR):
+ARM GAS  C:\Users\IAHERN~1\AppData\Local\Temp\ccTG0pDq.s 			page 7
+
+
+ 279:Core/Src/sm.c ****     {
+ 280:Core/Src/sm.c ****      //   BLUENRG_PRINTF("INSIDE DISCOVERY_ERROR\r\n");
+ 281:Core/Src/sm.c ****         Reset_DiscoveryContext();
+ 282:Core/Src/sm.c ****     }
+ 283:Core/Src/sm.c ****     break; /* end case (DISCOVERY_ERROR) */
+ 284:Core/Src/sm.c ****     default:
+ 285:Core/Src/sm.c ****         break;
+ 286:Core/Src/sm.c ****     }/* end switch */
+ 287:Core/Src/sm.c **** 
+ 288:Core/Src/sm.c **** }/* end Connection_StateMachine() */
+ 289:Core/Src/sm.c **** 
+ 290:Core/Src/sm.c **** 
+ 291:Core/Src/sm.c **** 
+ 292:Core/Src/sm.c **** 
+ 293:Core/Src/sm.c **** uint8_t hidSetDeviceDiscoverable(uint8_t mode, uint8_t nameLen, uint8_t *name)
+ 294:Core/Src/sm.c **** {
+  46              		.loc 1 294 1 view -0
+  47              		.cfi_startproc
+  48              		@ args = 0, pretend = 0, frame = 0
+  49              		@ frame_needed = 0, uses_anonymous_args = 0
+  50              		.loc 1 294 1 is_stmt 0 view .LVU1
+  51 0000 70B5     		push	{r4, r5, r6, lr}
+  52              		.cfi_def_cfa_offset 16
+  53              		.cfi_offset 4, -16
+  54              		.cfi_offset 5, -12
+  55              		.cfi_offset 6, -8
+  56              		.cfi_offset 14, -4
+  57 0002 88B0     		sub	sp, sp, #32
+  58              		.cfi_def_cfa_offset 48
+  59 0004 0E46     		mov	r6, r1
+  60 0006 1546     		mov	r5, r2
+ 295:Core/Src/sm.c ****   uint8_t ret;
+  61              		.loc 1 295 3 is_stmt 1 view .LVU2
+ 296:Core/Src/sm.c ****   advtServUUID[0] = AD_TYPE_16_BIT_SERV_UUID_CMPLT_LIST;
+  62              		.loc 1 296 3 view .LVU3
+  63              		.loc 1 296 19 is_stmt 0 view .LVU4
+  64 0008 214B     		ldr	r3, .L11
+  65 000a 0324     		movs	r4, #3
+  66 000c 1C70     		strb	r4, [r3]
+ 297:Core/Src/sm.c **** 
+ 298:Core/Src/sm.c ****   // advtServUUID[1]=HUMAN_INTERFACE_DEVICE_SERVICE_UUID;
+ 299:Core/Src/sm.c ****   // advtServUUID[2]=BATTERY_SERVICE_SERVICE_UUID;
+ 300:Core/Src/sm.c ****   // advtServUUID[3]=DEVICE_INFORMATION_SERVICE_UUID;
+ 301:Core/Src/sm.c ****   // advtServUUID[100]=0x1111;
+ 302:Core/Src/sm.c **** 
+ 303:Core/Src/sm.c ****  
+ 304:Core/Src/sm.c ****   if (mode == LIMITED_DISCOVERABLE_MODE)
+  67              		.loc 1 304 3 is_stmt 1 view .LVU5
+  68              		.loc 1 304 6 is_stmt 0 view .LVU6
+  69 000e 0128     		cmp	r0, #1
+  70 0010 08D0     		beq	.L9
+ 305:Core/Src/sm.c ****   {
+ 306:Core/Src/sm.c ****     BLUENRG_PRINTF("Set limited Discoverable Mode.\n");
+ 307:Core/Src/sm.c ****     ret = aci_gap_set_limited_discoverable(ADV_IND,
+ 308:Core/Src/sm.c ****                                            (ADV_INTERVAL_MIN_MS * 1000) / 625, (ADV_INTERVAL_MAX_MS
+ 309:Core/Src/sm.c ****                                            PUBLIC_ADDR, NO_WHITE_LIST_USE,
+ 310:Core/Src/sm.c ****                                            nameLen, name, advtServUUIDlen, advtServUUID, 0, 0);
+ARM GAS  C:\Users\IAHERN~1\AppData\Local\Temp\ccTG0pDq.s 			page 8
+
+
+ 311:Core/Src/sm.c ****     if (ret != BLE_STATUS_SUCCESS)
+ 312:Core/Src/sm.c ****     {
+ 313:Core/Src/sm.c ****       BLUENRG_PRINTF("aci_gap_set_discoverable() failed: 0x%02x\r\n", ret);
+ 314:Core/Src/sm.c ****     }
+ 315:Core/Src/sm.c ****     else
+ 316:Core/Src/sm.c ****     {
+ 317:Core/Src/sm.c ****       BLUENRG_PRINTF("aci_gap_set_discoverable() LIMITED --> SUCCESS\r\n");
+ 318:Core/Src/sm.c ****     }
+ 319:Core/Src/sm.c ****     return ret;
+ 320:Core/Src/sm.c ****   }
+ 321:Core/Src/sm.c ****   else if (mode == GENERAL_DISCOVERABLE_MODE)
+  71              		.loc 1 321 8 is_stmt 1 view .LVU7
+  72              		.loc 1 321 11 is_stmt 0 view .LVU8
+  73 0012 0228     		cmp	r0, #2
+  74 0014 24D0     		beq	.L10
+ 322:Core/Src/sm.c ****   {
+ 323:Core/Src/sm.c ****     // BLUENRG_PRINTF("Set General Discoverable Mode.\n");
+ 324:Core/Src/sm.c ****     ret = aci_gap_set_discoverable(ADV_IND,
+ 325:Core/Src/sm.c ****                                    (ADV_INTERVAL_MIN_MS * 1000) / 625, (ADV_INTERVAL_MAX_MS * 1000)
+ 326:Core/Src/sm.c ****                                    STATIC_RANDOM_ADDR, NO_WHITE_LIST_USE,
+ 327:Core/Src/sm.c ****                                    nameLen, name, advtServUUIDlen, advtServUUID, 0, 0);
+ 328:Core/Src/sm.c ****     if (ret != BLE_STATUS_SUCCESS)
+ 329:Core/Src/sm.c ****     {
+ 330:Core/Src/sm.c ****       // BLUENRG_PRINTF("aci_gap_set_discoverable() failed: 0x%02x\r\n",ret);
+ 331:Core/Src/sm.c ****     }
+ 332:Core/Src/sm.c ****     else
+ 333:Core/Src/sm.c ****     {
+ 334:Core/Src/sm.c ****       BLUENRG_PRINTF("aci_gap_set_discoverable() GENERAL--> SUCCESS\r\n");
+ 335:Core/Src/sm.c ****     }
+ 336:Core/Src/sm.c **** 
+ 337:Core/Src/sm.c ****     return ret;
+ 338:Core/Src/sm.c ****   }
+ 339:Core/Src/sm.c ****   BLUENRG_PRINTF("Wrong mode, device couldn't set as discoverable.\n");
+  75              		.loc 1 339 3 is_stmt 1 view .LVU9
+  76 0016 1F48     		ldr	r0, .L11+4
+  77              	.LVL1:
+  78              		.loc 1 339 3 is_stmt 0 view .LVU10
+  79 0018 FFF7FEFF 		bl	puts
+  80              	.LVL2:
+ 340:Core/Src/sm.c ****   return -1;
+  81              		.loc 1 340 3 is_stmt 1 view .LVU11
+  82              		.loc 1 340 10 is_stmt 0 view .LVU12
+  83 001c FF24     		movs	r4, #255
+  84              	.L5:
+ 341:Core/Src/sm.c **** }
+  85              		.loc 1 341 1 view .LVU13
+  86 001e 2046     		mov	r0, r4
+  87 0020 08B0     		add	sp, sp, #32
+  88              		.cfi_remember_state
+  89              		.cfi_def_cfa_offset 16
+  90              		@ sp needed
+  91 0022 70BD     		pop	{r4, r5, r6, pc}
+  92              	.LVL3:
+  93              	.L9:
+  94              		.cfi_restore_state
+ 306:Core/Src/sm.c ****     ret = aci_gap_set_limited_discoverable(ADV_IND,
+  95              		.loc 1 306 5 is_stmt 1 view .LVU14
+ARM GAS  C:\Users\IAHERN~1\AppData\Local\Temp\ccTG0pDq.s 			page 9
+
+
+  96 0024 1C48     		ldr	r0, .L11+8
+  97              	.LVL4:
+ 306:Core/Src/sm.c ****     ret = aci_gap_set_limited_discoverable(ADV_IND,
+  98              		.loc 1 306 5 is_stmt 0 view .LVU15
+  99 0026 FFF7FEFF 		bl	puts
+ 100              	.LVL5:
+ 307:Core/Src/sm.c ****                                            (ADV_INTERVAL_MIN_MS * 1000) / 625, (ADV_INTERVAL_MAX_MS
+ 101              		.loc 1 307 5 is_stmt 1 view .LVU16
+ 307:Core/Src/sm.c ****                                            (ADV_INTERVAL_MIN_MS * 1000) / 625, (ADV_INTERVAL_MAX_MS
+ 102              		.loc 1 307 11 is_stmt 0 view .LVU17
+ 103 002a 0020     		movs	r0, #0
+ 104 002c 0690     		str	r0, [sp, #24]
+ 105 002e 0590     		str	r0, [sp, #20]
+ 106 0030 174B     		ldr	r3, .L11
+ 107 0032 0493     		str	r3, [sp, #16]
+ 108 0034 194B     		ldr	r3, .L11+12
+ 109 0036 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 110 0038 0393     		str	r3, [sp, #12]
+ 111 003a 0295     		str	r5, [sp, #8]
+ 112 003c 0196     		str	r6, [sp, #4]
+ 113 003e 0090     		str	r0, [sp]
+ 114 0040 0346     		mov	r3, r0
+ 115 0042 5022     		movs	r2, #80
+ 116 0044 3021     		movs	r1, #48
+ 117 0046 FFF7FEFF 		bl	aci_gap_set_limited_discoverable
+ 118              	.LVL6:
+ 311:Core/Src/sm.c ****     {
+ 119              		.loc 1 311 5 is_stmt 1 view .LVU18
+ 311:Core/Src/sm.c ****     {
+ 120              		.loc 1 311 8 is_stmt 0 view .LVU19
+ 121 004a 0446     		mov	r4, r0
+ 122 004c 20B1     		cbz	r0, .L3
+ 313:Core/Src/sm.c ****     }
+ 123              		.loc 1 313 7 is_stmt 1 view .LVU20
+ 124 004e 0146     		mov	r1, r0
+ 125 0050 1348     		ldr	r0, .L11+16
+ 126              	.LVL7:
+ 313:Core/Src/sm.c ****     }
+ 127              		.loc 1 313 7 is_stmt 0 view .LVU21
+ 128 0052 FFF7FEFF 		bl	printf
+ 129              	.LVL8:
+ 313:Core/Src/sm.c ****     }
+ 130              		.loc 1 313 7 view .LVU22
+ 131 0056 E2E7     		b	.L5
+ 132              	.LVL9:
+ 133              	.L3:
+ 317:Core/Src/sm.c ****     }
+ 134              		.loc 1 317 7 is_stmt 1 view .LVU23
+ 135 0058 1248     		ldr	r0, .L11+20
+ 136              	.LVL10:
+ 317:Core/Src/sm.c ****     }
+ 137              		.loc 1 317 7 is_stmt 0 view .LVU24
+ 138 005a FFF7FEFF 		bl	puts
+ 139              	.LVL11:
+ 319:Core/Src/sm.c ****   }
+ 140              		.loc 1 319 5 is_stmt 1 view .LVU25
+ 319:Core/Src/sm.c ****   }
+ARM GAS  C:\Users\IAHERN~1\AppData\Local\Temp\ccTG0pDq.s 			page 10
+
+
+ 141              		.loc 1 319 12 is_stmt 0 view .LVU26
+ 142 005e DEE7     		b	.L5
+ 143              	.LVL12:
+ 144              	.L10:
+ 324:Core/Src/sm.c ****                                    (ADV_INTERVAL_MIN_MS * 1000) / 625, (ADV_INTERVAL_MAX_MS * 1000)
+ 145              		.loc 1 324 5 is_stmt 1 view .LVU27
+ 324:Core/Src/sm.c ****                                    (ADV_INTERVAL_MIN_MS * 1000) / 625, (ADV_INTERVAL_MAX_MS * 1000)
+ 146              		.loc 1 324 11 is_stmt 0 view .LVU28
+ 147 0060 0020     		movs	r0, #0
+ 148              	.LVL13:
+ 324:Core/Src/sm.c ****                                    (ADV_INTERVAL_MIN_MS * 1000) / 625, (ADV_INTERVAL_MAX_MS * 1000)
+ 149              		.loc 1 324 11 view .LVU29
+ 150 0062 0690     		str	r0, [sp, #24]
+ 151 0064 0590     		str	r0, [sp, #20]
+ 152 0066 0A4B     		ldr	r3, .L11
+ 153 0068 0493     		str	r3, [sp, #16]
+ 154 006a 0C4B     		ldr	r3, .L11+12
+ 155 006c 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 156 006e 0393     		str	r3, [sp, #12]
+ 157 0070 0292     		str	r2, [sp, #8]
+ 158 0072 0191     		str	r1, [sp, #4]
+ 159 0074 0090     		str	r0, [sp]
+ 160 0076 0123     		movs	r3, #1
+ 161 0078 5022     		movs	r2, #80
+ 162              	.LVL14:
+ 324:Core/Src/sm.c ****                                    (ADV_INTERVAL_MIN_MS * 1000) / 625, (ADV_INTERVAL_MAX_MS * 1000)
+ 163              		.loc 1 324 11 view .LVU30
+ 164 007a 3021     		movs	r1, #48
+ 165              	.LVL15:
+ 324:Core/Src/sm.c ****                                    (ADV_INTERVAL_MIN_MS * 1000) / 625, (ADV_INTERVAL_MAX_MS * 1000)
+ 166              		.loc 1 324 11 view .LVU31
+ 167 007c FFF7FEFF 		bl	aci_gap_set_discoverable
+ 168              	.LVL16:
+ 328:Core/Src/sm.c ****     {
+ 169              		.loc 1 328 5 is_stmt 1 view .LVU32
+ 328:Core/Src/sm.c ****     {
+ 170              		.loc 1 328 8 is_stmt 0 view .LVU33
+ 171 0080 0446     		mov	r4, r0
+ 172 0082 0028     		cmp	r0, #0
+ 173 0084 CBD1     		bne	.L5
+ 334:Core/Src/sm.c ****     }
+ 174              		.loc 1 334 7 is_stmt 1 view .LVU34
+ 175 0086 0848     		ldr	r0, .L11+24
+ 176              	.LVL17:
+ 334:Core/Src/sm.c ****     }
+ 177              		.loc 1 334 7 is_stmt 0 view .LVU35
+ 178 0088 FFF7FEFF 		bl	puts
+ 179              	.LVL18:
+ 337:Core/Src/sm.c ****   }
+ 180              		.loc 1 337 5 is_stmt 1 view .LVU36
+ 337:Core/Src/sm.c ****   }
+ 181              		.loc 1 337 12 is_stmt 0 view .LVU37
+ 182 008c C7E7     		b	.L5
+ 183              	.L12:
+ 184 008e 00BF     		.align	2
+ 185              	.L11:
+ 186 0090 00000000 		.word	advtServUUID
+ARM GAS  C:\Users\IAHERN~1\AppData\Local\Temp\ccTG0pDq.s 			page 11
+
+
+ 187 0094 AC000000 		.word	.LC4
+ 188 0098 00000000 		.word	.LC0
+ 189 009c 00000000 		.word	advtServUUIDlen
+ 190 00a0 20000000 		.word	.LC1
+ 191 00a4 4C000000 		.word	.LC2
+ 192 00a8 7C000000 		.word	.LC3
+ 193              		.cfi_endproc
+ 194              	.LFE139:
+ 196              		.section	.rodata.receiveData.str1.4,"aMS",%progbits,1
+ 197              		.align	2
+ 198              	.LC5:
+ 199 0000 52656365 		.ascii	"Received: \000"
+ 199      69766564 
+ 199      3A2000
+ 200 000b 00       		.align	2
+ 201              	.LC6:
+ 202 000c 0D00     		.ascii	"\015\000"
+ 203              		.section	.text.receiveData,"ax",%progbits
+ 204              		.align	1
+ 205              		.global	receiveData
+ 206              		.syntax unified
+ 207              		.thumb
+ 208              		.thumb_func
+ 210              	receiveData:
+ 211              	.LVL19:
+ 212              	.LFB140:
+ 342:Core/Src/sm.c **** void receiveData(uint8_t *data_buffer, uint8_t Nb_bytes)
+ 343:Core/Src/sm.c **** {
+ 213              		.loc 1 343 1 is_stmt 1 view -0
+ 214              		.cfi_startproc
+ 215              		@ args = 0, pretend = 0, frame = 0
+ 216              		@ frame_needed = 0, uses_anonymous_args = 0
+ 217              		.loc 1 343 1 is_stmt 0 view .LVU39
+ 218 0000 70B5     		push	{r4, r5, r6, lr}
+ 219              		.cfi_def_cfa_offset 16
+ 220              		.cfi_offset 4, -16
+ 221              		.cfi_offset 5, -12
+ 222              		.cfi_offset 6, -8
+ 223              		.cfi_offset 14, -4
+ 224 0002 0646     		mov	r6, r0
+ 225 0004 0D46     		mov	r5, r1
+ 344:Core/Src/sm.c ****   BLUENRG_PRINTF("Received: ");
+ 226              		.loc 1 344 3 is_stmt 1 view .LVU40
+ 227 0006 0A48     		ldr	r0, .L17
+ 228              	.LVL20:
+ 229              		.loc 1 344 3 is_stmt 0 view .LVU41
+ 230 0008 FFF7FEFF 		bl	printf
+ 231              	.LVL21:
+ 345:Core/Src/sm.c ****   for (int i = 0; i < Nb_bytes; i++)
+ 232              		.loc 1 345 3 is_stmt 1 view .LVU42
+ 233              	.LBB2:
+ 234              		.loc 1 345 8 view .LVU43
+ 235              		.loc 1 345 12 is_stmt 0 view .LVU44
+ 236 000c 0024     		movs	r4, #0
+ 237              		.loc 1 345 3 view .LVU45
+ 238 000e 03E0     		b	.L14
+ 239              	.LVL22:
+ARM GAS  C:\Users\IAHERN~1\AppData\Local\Temp\ccTG0pDq.s 			page 12
+
+
+ 240              	.L15:
+ 346:Core/Src/sm.c ****   {
+ 347:Core/Src/sm.c ****     BLUENRG_PRINTF("%c", data_buffer[i]);
+ 241              		.loc 1 347 5 is_stmt 1 view .LVU46
+ 242 0010 305D     		ldrb	r0, [r6, r4]	@ zero_extendqisi2
+ 243 0012 FFF7FEFF 		bl	putchar
+ 244              	.LVL23:
+ 345:Core/Src/sm.c ****   for (int i = 0; i < Nb_bytes; i++)
+ 245              		.loc 1 345 34 discriminator 3 view .LVU47
+ 246 0016 0134     		adds	r4, r4, #1
+ 247              	.LVL24:
+ 248              	.L14:
+ 345:Core/Src/sm.c ****   for (int i = 0; i < Nb_bytes; i++)
+ 249              		.loc 1 345 21 discriminator 1 view .LVU48
+ 250 0018 A542     		cmp	r5, r4
+ 251 001a F9DC     		bgt	.L15
+ 252              	.LBE2:
+ 348:Core/Src/sm.c ****   }
+ 349:Core/Src/sm.c ****   BLUENRG_PRINTF("\r\n");
+ 253              		.loc 1 349 3 view .LVU49
+ 254 001c 0548     		ldr	r0, .L17+4
+ 255 001e FFF7FEFF 		bl	puts
+ 256              	.LVL25:
+ 350:Core/Src/sm.c ****   fflush(stdout);
+ 257              		.loc 1 350 3 view .LVU50
+ 258              		.loc 1 350 10 is_stmt 0 view .LVU51
+ 259 0022 054B     		ldr	r3, .L17+8
+ 260 0024 1B68     		ldr	r3, [r3]
+ 261              		.loc 1 350 3 view .LVU52
+ 262 0026 9868     		ldr	r0, [r3, #8]
+ 263 0028 FFF7FEFF 		bl	fflush
+ 264              	.LVL26:
+ 351:Core/Src/sm.c **** }
+ 265              		.loc 1 351 1 view .LVU53
+ 266 002c 70BD     		pop	{r4, r5, r6, pc}
+ 267              	.LVL27:
+ 268              	.L18:
+ 269              		.loc 1 351 1 view .LVU54
+ 270 002e 00BF     		.align	2
+ 271              	.L17:
+ 272 0030 00000000 		.word	.LC5
+ 273 0034 0C000000 		.word	.LC6
+ 274 0038 00000000 		.word	_impure_ptr
+ 275              		.cfi_endproc
+ 276              	.LFE140:
+ 278              		.section	.text.Reset_DiscoveryContext,"ax",%progbits
+ 279              		.align	1
+ 280              		.global	Reset_DiscoveryContext
+ 281              		.syntax unified
+ 282              		.thumb
+ 283              		.thumb_func
+ 285              	Reset_DiscoveryContext:
+ 286              	.LFB141:
+ 352:Core/Src/sm.c **** 
+ 353:Core/Src/sm.c **** void Reset_DiscoveryContext(void)
+ 354:Core/Src/sm.c **** {
+ 287              		.loc 1 354 1 is_stmt 1 view -0
+ARM GAS  C:\Users\IAHERN~1\AppData\Local\Temp\ccTG0pDq.s 			page 13
+
+
+ 288              		.cfi_startproc
+ 289              		@ args = 0, pretend = 0, frame = 0
+ 290              		@ frame_needed = 0, uses_anonymous_args = 0
+ 291              		@ link register save eliminated.
+ 355:Core/Src/sm.c ****     discovery.check_disc_proc_timer = FALSE;
+ 292              		.loc 1 355 5 view .LVU56
+ 293              		.loc 1 355 37 is_stmt 0 view .LVU57
+ 294 0000 0B4A     		ldr	r2, .L20
+ 295 0002 0023     		movs	r3, #0
+ 296 0004 1370     		strb	r3, [r2]
+ 356:Core/Src/sm.c ****     discovery.check_disc_mode_timer = FALSE;
+ 297              		.loc 1 356 5 is_stmt 1 view .LVU58
+ 298              		.loc 1 356 37 is_stmt 0 view .LVU59
+ 299 0006 5370     		strb	r3, [r2, #1]
+ 357:Core/Src/sm.c ****     discovery.is_device_found = FALSE;
+ 300              		.loc 1 357 5 is_stmt 1 view .LVU60
+ 301              		.loc 1 357 31 is_stmt 0 view .LVU61
+ 302 0008 9370     		strb	r3, [r2, #2]
+ 358:Core/Src/sm.c ****     discovery.do_connect = FALSE;
+ 303              		.loc 1 358 5 is_stmt 1 view .LVU62
+ 304              		.loc 1 358 26 is_stmt 0 view .LVU63
+ 305 000a D370     		strb	r3, [r2, #3]
+ 359:Core/Src/sm.c ****     discovery.startTime = 0;
+ 306              		.loc 1 359 5 is_stmt 1 view .LVU64
+ 307              		.loc 1 359 25 is_stmt 0 view .LVU65
+ 308 000c 5360     		str	r3, [r2, #4]
+ 360:Core/Src/sm.c ****     discovery.device_state = INIT_STATE;
+ 309              		.loc 1 360 5 is_stmt 1 view .LVU66
+ 310              		.loc 1 360 28 is_stmt 0 view .LVU67
+ 311 000e 1382     		strh	r3, [r2, #16]	@ movhi
+ 361:Core/Src/sm.c ****     BLUENRG_memset(&discovery.device_found_address[0], 0, 6);
+ 312              		.loc 1 361 5 is_stmt 1 view .LVU68
+ 313 0010 C2F80930 		str	r3, [r2, #9]	@ unaligned
+ 314 0014 A2F80D30 		strh	r3, [r2, #13]	@ unaligned
+ 362:Core/Src/sm.c ****     device_role = 0xFF;
+ 315              		.loc 1 362 5 view .LVU69
+ 316              		.loc 1 362 17 is_stmt 0 view .LVU70
+ 317 0018 064A     		ldr	r2, .L20+4
+ 318 001a FF21     		movs	r1, #255
+ 319 001c 1180     		strh	r1, [r2]	@ movhi
+ 363:Core/Src/sm.c ****     mtu_exchanged = 0;
+ 320              		.loc 1 363 5 is_stmt 1 view .LVU71
+ 321              		.loc 1 363 19 is_stmt 0 view .LVU72
+ 322 001e 064A     		ldr	r2, .L20+8
+ 323 0020 1370     		strb	r3, [r2]
+ 364:Core/Src/sm.c ****     mtu_exchanged_wait = 0;
+ 324              		.loc 1 364 5 is_stmt 1 view .LVU73
+ 325              		.loc 1 364 24 is_stmt 0 view .LVU74
+ 326 0022 064A     		ldr	r2, .L20+12
+ 327 0024 1370     		strb	r3, [r2]
+ 365:Core/Src/sm.c ****     write_char_len = CHAR_VALUE_LENGTH - 3;
+ 328              		.loc 1 365 5 is_stmt 1 view .LVU75
+ 329              		.loc 1 365 20 is_stmt 0 view .LVU76
+ 330 0026 064B     		ldr	r3, .L20+16
+ 331 0028 3C22     		movs	r2, #60
+ 332 002a 1A80     		strh	r2, [r3]	@ movhi
+ 366:Core/Src/sm.c **** }
+ARM GAS  C:\Users\IAHERN~1\AppData\Local\Temp\ccTG0pDq.s 			page 14
+
+
+ 333              		.loc 1 366 1 view .LVU77
+ 334 002c 7047     		bx	lr
+ 335              	.L21:
+ 336 002e 00BF     		.align	2
+ 337              	.L20:
+ 338 0030 00000000 		.word	discovery
+ 339 0034 00000000 		.word	device_role
+ 340 0038 00000000 		.word	mtu_exchanged
+ 341 003c 00000000 		.word	mtu_exchanged_wait
+ 342 0040 00000000 		.word	write_char_len
+ 343              		.cfi_endproc
+ 344              	.LFE141:
+ 346              		.section	.rodata.Connection_StateMachine.str1.4,"aMS",%progbits,1
+ 347              		.align	2
+ 348              	.LC7:
+ 349 0000 494E5349 		.ascii	"INSIDE INIT STATE\015\000"
+ 349      44452049 
+ 349      4E495420 
+ 349      53544154 
+ 349      450D00
+ 350 0013 00       		.align	2
+ 351              	.LC8:
+ 352 0014 6163695F 		.ascii	"aci_gap_start_limited_discovery_proc() failed: %02X"
+ 352      6761705F 
+ 352      73746172 
+ 352      745F6C69 
+ 352      6D697465 
+ 353 0047 0D0A00   		.ascii	"\015\012\000"
+ 354 004a 0000     		.align	2
+ 355              	.LC9:
+ 356 004c 6163695F 		.ascii	"aci_gap_start_limited_discovery_proc OK\015\000"
+ 356      6761705F 
+ 356      73746172 
+ 356      745F6C69 
+ 356      6D697465 
+ 357 0075 000000   		.align	2
+ 358              	.LC10:
+ 359 0078 6163695F 		.ascii	"aci_gap_set_non_discoverable() failed: 0x%02x\015\012"
+ 359      6761705F 
+ 359      7365745F 
+ 359      6E6F6E5F 
+ 359      64697363 
+ 360 00a7 00       		.ascii	"\000"
+ 361              		.align	2
+ 362              	.LC11:
+ 363 00a8 6163695F 		.ascii	"aci_gap_set_non_discoverable() OK\015\000"
+ 363      6761705F 
+ 363      7365745F 
+ 363      6E6F6E5F 
+ 363      64697363 
+ 364 00cb 00       		.align	2
+ 365              	.LC12:
+ 366 00cc 6163695F 		.ascii	"aci_gap_terminate_gap_procedure() failed: 0x%02x\015"
+ 366      6761705F 
+ 366      7465726D 
+ 366      696E6174 
+ 366      655F6761 
+ARM GAS  C:\Users\IAHERN~1\AppData\Local\Temp\ccTG0pDq.s 			page 15
+
+
+ 367 00fd 0A00     		.ascii	"\012\000"
+ 368 00ff 00       		.align	2
+ 369              	.LC13:
+ 370 0100 6163695F 		.ascii	"aci_gap_terminate_gap_procedure() OK\015\000"
+ 370      6761705F 
+ 370      7465726D 
+ 370      696E6174 
+ 370      655F6761 
+ 371 0126 0000     		.align	2
+ 372              	.LC14:
+ 373 0128 44657669 		.ascii	"Device Found with address: \000"
+ 373      63652046 
+ 373      6F756E64 
+ 373      20776974 
+ 373      68206164 
+ 374              		.align	2
+ 375              	.LC15:
+ 376 0144 25303258 		.ascii	"%02X-\000"
+ 376      2D00
+ 377 014a 0000     		.align	2
+ 378              	.LC16:
+ 379 014c 25303258 		.ascii	"%02X\015\012\000"
+ 379      0D0A00
+ 380 0153 00       		.align	2
+ 381              	.LC17:
+ 382 0154 6163695F 		.ascii	"aci_gap_create_connection() failed: 0x%02x\015\012\000"
+ 382      6761705F 
+ 382      63726561 
+ 382      74655F63 
+ 382      6F6E6E65 
+ 383 0181 000000   		.align	2
+ 384              	.LC18:
+ 385 0184 6163695F 		.ascii	"aci_gap_create_connection() OK\015\000"
+ 385      6761705F 
+ 385      63726561 
+ 385      74655F63 
+ 385      6F6E6E65 
+ 386              		.align	2
+ 387              	.LC19:
+ 388 01a4 4572726F 		.ascii	"Error in hidSetDeviceDiscoverable() 0x%02x\012\000"
+ 388      7220696E 
+ 388      20686964 
+ 388      53657444 
+ 388      65766963 
+ 389              		.align	2
+ 390              	.LC20:
+ 391 01d0 6163695F 		.ascii	"aci_gap_set_discoverable() OK\015\000"
+ 391      6761705F 
+ 391      7365745F 
+ 391      64697363 
+ 391      6F766572 
+ 392              		.section	.text.Connection_StateMachine,"ax",%progbits
+ 393              		.align	1
+ 394              		.global	Connection_StateMachine
+ 395              		.syntax unified
+ 396              		.thumb
+ 397              		.thumb_func
+ARM GAS  C:\Users\IAHERN~1\AppData\Local\Temp\ccTG0pDq.s 			page 16
+
+
+ 399              	Connection_StateMachine:
+ 400              	.LFB138:
+ 108:Core/Src/sm.c ****     uint8_t ret;
+ 401              		.loc 1 108 1 is_stmt 1 view -0
+ 402              		.cfi_startproc
+ 403              		@ args = 0, pretend = 0, frame = 0
+ 404              		@ frame_needed = 0, uses_anonymous_args = 0
+ 405 0000 30B5     		push	{r4, r5, lr}
+ 406              		.cfi_def_cfa_offset 12
+ 407              		.cfi_offset 4, -12
+ 408              		.cfi_offset 5, -8
+ 409              		.cfi_offset 14, -4
+ 410 0002 89B0     		sub	sp, sp, #36
+ 411              		.cfi_def_cfa_offset 48
+ 109:Core/Src/sm.c ****  
+ 412              		.loc 1 109 5 view .LVU79
+ 111:Core/Src/sm.c ****     {
+ 413              		.loc 1 111 5 view .LVU80
+ 111:Core/Src/sm.c ****     {
+ 414              		.loc 1 111 22 is_stmt 0 view .LVU81
+ 415 0004 7F4B     		ldr	r3, .L47
+ 416 0006 1B8A     		ldrh	r3, [r3, #16]
+ 111:Core/Src/sm.c ****     {
+ 417              		.loc 1 111 5 view .LVU82
+ 418 0008 202B     		cmp	r3, #32
+ 419 000a 24D8     		bhi	.L23
+ 420 000c 202B     		cmp	r3, #32
+ 421 000e 31D8     		bhi	.L22
+ 422 0010 DFE813F0 		tbh	[pc, r3, lsl #1]
+ 423              	.L26:
+ 424 0014 2800     		.2byte	(.L32-.L26)/2
+ 425 0016 3200     		.2byte	(.L31-.L26)/2
+ 426 0018 D300     		.2byte	(.L30-.L26)/2
+ 427 001a 3000     		.2byte	(.L22-.L26)/2
+ 428 001c 4F00     		.2byte	(.L29-.L26)/2
+ 429 001e 3000     		.2byte	(.L22-.L26)/2
+ 430 0020 3000     		.2byte	(.L22-.L26)/2
+ 431 0022 3000     		.2byte	(.L22-.L26)/2
+ 432 0024 9C00     		.2byte	(.L28-.L26)/2
+ 433 0026 3000     		.2byte	(.L22-.L26)/2
+ 434 0028 3000     		.2byte	(.L22-.L26)/2
+ 435 002a 3000     		.2byte	(.L22-.L26)/2
+ 436 002c 3000     		.2byte	(.L22-.L26)/2
+ 437 002e 3000     		.2byte	(.L22-.L26)/2
+ 438 0030 3000     		.2byte	(.L22-.L26)/2
+ 439 0032 3000     		.2byte	(.L22-.L26)/2
+ 440 0034 D700     		.2byte	(.L27-.L26)/2
+ 441 0036 3000     		.2byte	(.L22-.L26)/2
+ 442 0038 3000     		.2byte	(.L22-.L26)/2
+ 443 003a 3000     		.2byte	(.L22-.L26)/2
+ 444 003c 3000     		.2byte	(.L22-.L26)/2
+ 445 003e 3000     		.2byte	(.L22-.L26)/2
+ 446 0040 3000     		.2byte	(.L22-.L26)/2
+ 447 0042 3000     		.2byte	(.L22-.L26)/2
+ 448 0044 3000     		.2byte	(.L22-.L26)/2
+ 449 0046 3000     		.2byte	(.L22-.L26)/2
+ 450 0048 3000     		.2byte	(.L22-.L26)/2
+ARM GAS  C:\Users\IAHERN~1\AppData\Local\Temp\ccTG0pDq.s 			page 17
+
+
+ 451 004a 3000     		.2byte	(.L22-.L26)/2
+ 452 004c 3000     		.2byte	(.L22-.L26)/2
+ 453 004e 3000     		.2byte	(.L22-.L26)/2
+ 454 0050 3000     		.2byte	(.L22-.L26)/2
+ 455 0052 3000     		.2byte	(.L22-.L26)/2
+ 456 0054 8900     		.2byte	(.L25-.L26)/2
+ 457              		.p2align 1
+ 458              	.L23:
+ 459 0056 402B     		cmp	r3, #64
+ 460 0058 53D0     		beq	.L33
+ 461 005a 802B     		cmp	r3, #128
+ 462 005c 0AD1     		bne	.L22
+ 281:Core/Src/sm.c ****     }
+ 463              		.loc 1 281 9 is_stmt 1 view .LVU83
+ 464 005e FFF7FEFF 		bl	Reset_DiscoveryContext
+ 465              	.LVL28:
+ 283:Core/Src/sm.c ****     default:
+ 466              		.loc 1 283 5 view .LVU84
+ 288:Core/Src/sm.c **** 
+ 467              		.loc 1 288 1 is_stmt 0 view .LVU85
+ 468 0062 07E0     		b	.L22
+ 469              	.L32:
+ 115:Core/Src/sm.c ****         Reset_DiscoveryContext();
+ 470              		.loc 1 115 9 is_stmt 1 view .LVU86
+ 471 0064 6848     		ldr	r0, .L47+4
+ 472 0066 FFF7FEFF 		bl	puts
+ 473              	.LVL29:
+ 116:Core/Src/sm.c ****         discovery.device_state = START_DISCOVERY_PROC;
+ 474              		.loc 1 116 9 view .LVU87
+ 475 006a FFF7FEFF 		bl	Reset_DiscoveryContext
+ 476              	.LVL30:
+ 117:Core/Src/sm.c ****     }
+ 477              		.loc 1 117 9 view .LVU88
+ 117:Core/Src/sm.c ****     }
+ 478              		.loc 1 117 32 is_stmt 0 view .LVU89
+ 479 006e 654B     		ldr	r3, .L47
+ 480 0070 0122     		movs	r2, #1
+ 481 0072 1A82     		strh	r2, [r3, #16]	@ movhi
+ 119:Core/Src/sm.c ****     case (START_DISCOVERY_PROC):
+ 482              		.loc 1 119 5 is_stmt 1 view .LVU90
+ 483              	.L22:
+ 288:Core/Src/sm.c **** 
+ 484              		.loc 1 288 1 is_stmt 0 view .LVU91
+ 485 0074 09B0     		add	sp, sp, #36
+ 486              		.cfi_remember_state
+ 487              		.cfi_def_cfa_offset 12
+ 488              		@ sp needed
+ 489 0076 30BD     		pop	{r4, r5, pc}
+ 490              	.L31:
+ 491              		.cfi_restore_state
+ 131:Core/Src/sm.c ****             (ADV_INTERVAL_MAX_MS * 1000) / 625,
+ 492              		.loc 1 131 9 is_stmt 1 view .LVU92
+ 131:Core/Src/sm.c ****             (ADV_INTERVAL_MAX_MS * 1000) / 625,
+ 493              		.loc 1 131 15 is_stmt 0 view .LVU93
+ 494 0078 0023     		movs	r3, #0
+ 495 007a 1A46     		mov	r2, r3
+ 496 007c 5021     		movs	r1, #80
+ARM GAS  C:\Users\IAHERN~1\AppData\Local\Temp\ccTG0pDq.s 			page 18
+
+
+ 497 007e 3020     		movs	r0, #48
+ 498 0080 FFF7FEFF 		bl	aci_gap_start_general_discovery_proc
+ 499              	.LVL31:
+ 135:Core/Src/sm.c ****         {
+ 500              		.loc 1 135 9 is_stmt 1 view .LVU94
+ 135:Core/Src/sm.c ****         {
+ 501              		.loc 1 135 12 is_stmt 0 view .LVU95
+ 502 0084 0146     		mov	r1, r0
+ 503 0086 30B1     		cbz	r0, .L35
+ 137:Core/Src/sm.c ****             discovery.device_state = DISCOVERY_ERROR;
+ 504              		.loc 1 137 13 is_stmt 1 view .LVU96
+ 505 0088 6048     		ldr	r0, .L47+8
+ 506              	.LVL32:
+ 137:Core/Src/sm.c ****             discovery.device_state = DISCOVERY_ERROR;
+ 507              		.loc 1 137 13 is_stmt 0 view .LVU97
+ 508 008a FFF7FEFF 		bl	printf
+ 509              	.LVL33:
+ 138:Core/Src/sm.c ****         }
+ 510              		.loc 1 138 13 is_stmt 1 view .LVU98
+ 138:Core/Src/sm.c ****         }
+ 511              		.loc 1 138 36 is_stmt 0 view .LVU99
+ 512 008e 5D4B     		ldr	r3, .L47
+ 513 0090 8022     		movs	r2, #128
+ 514 0092 1A82     		strh	r2, [r3, #16]	@ movhi
+ 515 0094 EEE7     		b	.L22
+ 516              	.LVL34:
+ 517              	.L35:
+ 142:Core/Src/sm.c ****             discovery.startTime = HAL_GetTick();
+ 518              		.loc 1 142 13 is_stmt 1 view .LVU100
+ 519 0096 5E48     		ldr	r0, .L47+12
+ 520              	.LVL35:
+ 142:Core/Src/sm.c ****             discovery.startTime = HAL_GetTick();
+ 521              		.loc 1 142 13 is_stmt 0 view .LVU101
+ 522 0098 FFF7FEFF 		bl	puts
+ 523              	.LVL36:
+ 143:Core/Src/sm.c ****             discovery.check_disc_proc_timer = TRUE;
+ 524              		.loc 1 143 13 is_stmt 1 view .LVU102
+ 143:Core/Src/sm.c ****             discovery.check_disc_proc_timer = TRUE;
+ 525              		.loc 1 143 35 is_stmt 0 view .LVU103
+ 526 009c FFF7FEFF 		bl	HAL_GetTick
+ 527              	.LVL37:
+ 143:Core/Src/sm.c ****             discovery.check_disc_proc_timer = TRUE;
+ 528              		.loc 1 143 33 discriminator 1 view .LVU104
+ 529 00a0 584B     		ldr	r3, .L47
+ 530 00a2 5860     		str	r0, [r3, #4]
+ 144:Core/Src/sm.c ****             discovery.check_disc_mode_timer = FALSE;
+ 531              		.loc 1 144 13 is_stmt 1 view .LVU105
+ 144:Core/Src/sm.c ****             discovery.check_disc_mode_timer = FALSE;
+ 532              		.loc 1 144 45 is_stmt 0 view .LVU106
+ 533 00a4 0122     		movs	r2, #1
+ 534 00a6 1A70     		strb	r2, [r3]
+ 145:Core/Src/sm.c ****             discovery.device_state = WAIT_TIMER_EXPIRED;
+ 535              		.loc 1 145 13 is_stmt 1 view .LVU107
+ 145:Core/Src/sm.c ****             discovery.device_state = WAIT_TIMER_EXPIRED;
+ 536              		.loc 1 145 45 is_stmt 0 view .LVU108
+ 537 00a8 0022     		movs	r2, #0
+ 538 00aa 5A70     		strb	r2, [r3, #1]
+ARM GAS  C:\Users\IAHERN~1\AppData\Local\Temp\ccTG0pDq.s 			page 19
+
+
+ 146:Core/Src/sm.c ****         }
+ 539              		.loc 1 146 13 is_stmt 1 view .LVU109
+ 146:Core/Src/sm.c ****         }
+ 540              		.loc 1 146 36 is_stmt 0 view .LVU110
+ 541 00ac 0422     		movs	r2, #4
+ 542 00ae 1A82     		strh	r2, [r3, #16]	@ movhi
+ 543 00b0 E0E7     		b	.L22
+ 544              	.LVL38:
+ 545              	.L29:
+ 153:Core/Src/sm.c ****         {
+ 546              		.loc 1 153 9 is_stmt 1 view .LVU111
+ 153:Core/Src/sm.c ****         {
+ 547              		.loc 1 153 22 is_stmt 0 view .LVU112
+ 548 00b2 544B     		ldr	r3, .L47
+ 549 00b4 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 153:Core/Src/sm.c ****         {
+ 550              		.loc 1 153 12 view .LVU113
+ 551 00b6 012B     		cmp	r3, #1
+ 552 00b8 13D0     		beq	.L45
+ 164:Core/Src/sm.c ****         {
+ 553              		.loc 1 164 14 is_stmt 1 view .LVU114
+ 164:Core/Src/sm.c ****         {
+ 554              		.loc 1 164 27 is_stmt 0 view .LVU115
+ 555 00ba 524B     		ldr	r3, .L47
+ 556 00bc 5B78     		ldrb	r3, [r3, #1]	@ zero_extendqisi2
+ 164:Core/Src/sm.c ****         {
+ 557              		.loc 1 164 17 view .LVU116
+ 558 00be 012B     		cmp	r3, #1
+ 559 00c0 D8D1     		bne	.L22
+ 167:Core/Src/sm.c ****             {
+ 560              		.loc 1 167 13 is_stmt 1 view .LVU117
+ 167:Core/Src/sm.c ****             {
+ 561              		.loc 1 167 17 is_stmt 0 view .LVU118
+ 562 00c2 FFF7FEFF 		bl	HAL_GetTick
+ 563              	.LVL39:
+ 167:Core/Src/sm.c ****             {
+ 564              		.loc 1 167 42 discriminator 1 view .LVU119
+ 565 00c6 4F4B     		ldr	r3, .L47
+ 566 00c8 5B68     		ldr	r3, [r3, #4]
+ 167:Core/Src/sm.c ****             {
+ 567              		.loc 1 167 31 discriminator 1 view .LVU120
+ 568 00ca C01A     		subs	r0, r0, r3
+ 167:Core/Src/sm.c ****             {
+ 569              		.loc 1 167 53 discriminator 1 view .LVU121
+ 570 00cc 514B     		ldr	r3, .L47+16
+ 571 00ce 1B88     		ldrh	r3, [r3]
+ 167:Core/Src/sm.c ****             {
+ 572              		.loc 1 167 16 discriminator 1 view .LVU122
+ 573 00d0 9842     		cmp	r0, r3
+ 574 00d2 CFD9     		bls	.L22
+ 169:Core/Src/sm.c ****                 discovery.startTime = 0;
+ 575              		.loc 1 169 17 is_stmt 1 view .LVU123
+ 169:Core/Src/sm.c ****                 discovery.startTime = 0;
+ 576              		.loc 1 169 49 is_stmt 0 view .LVU124
+ 577 00d4 4B4B     		ldr	r3, .L47
+ 578 00d6 0022     		movs	r2, #0
+ 579 00d8 5A70     		strb	r2, [r3, #1]
+ARM GAS  C:\Users\IAHERN~1\AppData\Local\Temp\ccTG0pDq.s 			page 20
+
+
+ 170:Core/Src/sm.c **** 
+ 580              		.loc 1 170 17 is_stmt 1 view .LVU125
+ 170:Core/Src/sm.c **** 
+ 581              		.loc 1 170 37 is_stmt 0 view .LVU126
+ 582 00da 5A60     		str	r2, [r3, #4]
+ 173:Core/Src/sm.c **** 
+ 583              		.loc 1 173 17 is_stmt 1 view .LVU127
+ 173:Core/Src/sm.c **** 
+ 584              		.loc 1 173 40 is_stmt 0 view .LVU128
+ 585 00dc 4022     		movs	r2, #64
+ 586 00de 1A82     		strh	r2, [r3, #16]	@ movhi
+ 587 00e0 C8E7     		b	.L22
+ 588              	.L45:
+ 156:Core/Src/sm.c ****             {
+ 589              		.loc 1 156 13 is_stmt 1 view .LVU129
+ 156:Core/Src/sm.c ****             {
+ 590              		.loc 1 156 17 is_stmt 0 view .LVU130
+ 591 00e2 FFF7FEFF 		bl	HAL_GetTick
+ 592              	.LVL40:
+ 156:Core/Src/sm.c ****             {
+ 593              		.loc 1 156 42 discriminator 1 view .LVU131
+ 594 00e6 474B     		ldr	r3, .L47
+ 595 00e8 5B68     		ldr	r3, [r3, #4]
+ 156:Core/Src/sm.c ****             {
+ 596              		.loc 1 156 31 discriminator 1 view .LVU132
+ 597 00ea C01A     		subs	r0, r0, r3
+ 156:Core/Src/sm.c ****             {
+ 598              		.loc 1 156 53 discriminator 1 view .LVU133
+ 599 00ec 494B     		ldr	r3, .L47+16
+ 600 00ee 1B88     		ldrh	r3, [r3]
+ 156:Core/Src/sm.c ****             {
+ 601              		.loc 1 156 16 discriminator 1 view .LVU134
+ 602 00f0 9842     		cmp	r0, r3
+ 603 00f2 BFD9     		bls	.L22
+ 158:Core/Src/sm.c ****                 discovery.startTime = 0;
+ 604              		.loc 1 158 17 is_stmt 1 view .LVU135
+ 158:Core/Src/sm.c ****                 discovery.startTime = 0;
+ 605              		.loc 1 158 49 is_stmt 0 view .LVU136
+ 606 00f4 434B     		ldr	r3, .L47
+ 607 00f6 0022     		movs	r2, #0
+ 608 00f8 1A70     		strb	r2, [r3]
+ 159:Core/Src/sm.c ****                 discovery.device_state = DO_TERMINATE_GAP_PROC;
+ 609              		.loc 1 159 17 is_stmt 1 view .LVU137
+ 159:Core/Src/sm.c ****                 discovery.device_state = DO_TERMINATE_GAP_PROC;
+ 610              		.loc 1 159 37 is_stmt 0 view .LVU138
+ 611 00fa 5A60     		str	r2, [r3, #4]
+ 160:Core/Src/sm.c ****             }/* if (HAL_GetTick() - discovery.startTime > discovery_time) */
+ 612              		.loc 1 160 17 is_stmt 1 view .LVU139
+ 160:Core/Src/sm.c ****             }/* if (HAL_GetTick() - discovery.startTime > discovery_time) */
+ 613              		.loc 1 160 40 is_stmt 0 view .LVU140
+ 614 00fc 2022     		movs	r2, #32
+ 615 00fe 1A82     		strh	r2, [r3, #16]	@ movhi
+ 616 0100 B8E7     		b	.L22
+ 617              	.L33:
+ 183:Core/Src/sm.c ****         if (ret != BLE_STATUS_SUCCESS)
+ 618              		.loc 1 183 9 is_stmt 1 view .LVU141
+ 183:Core/Src/sm.c ****         if (ret != BLE_STATUS_SUCCESS)
+ARM GAS  C:\Users\IAHERN~1\AppData\Local\Temp\ccTG0pDq.s 			page 21
+
+
+ 619              		.loc 1 183 15 is_stmt 0 view .LVU142
+ 620 0102 FFF7FEFF 		bl	aci_gap_set_non_discoverable
+ 621              	.LVL41:
+ 184:Core/Src/sm.c ****         {
+ 622              		.loc 1 184 9 is_stmt 1 view .LVU143
+ 184:Core/Src/sm.c ****         {
+ 623              		.loc 1 184 12 is_stmt 0 view .LVU144
+ 624 0106 0146     		mov	r1, r0
+ 625 0108 30B1     		cbz	r0, .L37
+ 186:Core/Src/sm.c ****             discovery.device_state = DISCOVERY_ERROR;
+ 626              		.loc 1 186 13 is_stmt 1 view .LVU145
+ 627 010a 4348     		ldr	r0, .L47+20
+ 628              	.LVL42:
+ 186:Core/Src/sm.c ****             discovery.device_state = DISCOVERY_ERROR;
+ 629              		.loc 1 186 13 is_stmt 0 view .LVU146
+ 630 010c FFF7FEFF 		bl	printf
+ 631              	.LVL43:
+ 187:Core/Src/sm.c ****         }
+ 632              		.loc 1 187 13 is_stmt 1 view .LVU147
+ 187:Core/Src/sm.c ****         }
+ 633              		.loc 1 187 36 is_stmt 0 view .LVU148
+ 634 0110 3C4B     		ldr	r3, .L47
+ 635 0112 8022     		movs	r2, #128
+ 636 0114 1A82     		strh	r2, [r3, #16]	@ movhi
+ 637 0116 ADE7     		b	.L22
+ 638              	.LVL44:
+ 639              	.L37:
+ 191:Core/Src/sm.c ****             /* Restart Central discovery procedure */
+ 640              		.loc 1 191 13 is_stmt 1 view .LVU149
+ 641 0118 4048     		ldr	r0, .L47+24
+ 642              	.LVL45:
+ 191:Core/Src/sm.c ****             /* Restart Central discovery procedure */
+ 643              		.loc 1 191 13 is_stmt 0 view .LVU150
+ 644 011a FFF7FEFF 		bl	puts
+ 645              	.LVL46:
+ 193:Core/Src/sm.c ****         }
+ 646              		.loc 1 193 13 is_stmt 1 view .LVU151
+ 193:Core/Src/sm.c ****         }
+ 647              		.loc 1 193 36 is_stmt 0 view .LVU152
+ 648 011e 394B     		ldr	r3, .L47
+ 649 0120 0022     		movs	r2, #0
+ 650 0122 1A82     		strh	r2, [r3, #16]	@ movhi
+ 651 0124 A6E7     		b	.L22
+ 652              	.LVL47:
+ 653              	.L25:
+ 201:Core/Src/sm.c ****         if (ret != BLE_STATUS_SUCCESS)
+ 654              		.loc 1 201 9 is_stmt 1 view .LVU153
+ 201:Core/Src/sm.c ****         if (ret != BLE_STATUS_SUCCESS)
+ 655              		.loc 1 201 15 is_stmt 0 view .LVU154
+ 656 0126 0220     		movs	r0, #2
+ 657 0128 FFF7FEFF 		bl	aci_gap_terminate_gap_proc
+ 658              	.LVL48:
+ 202:Core/Src/sm.c ****         {
+ 659              		.loc 1 202 9 is_stmt 1 view .LVU155
+ 202:Core/Src/sm.c ****         {
+ 660              		.loc 1 202 12 is_stmt 0 view .LVU156
+ 661 012c 0146     		mov	r1, r0
+ARM GAS  C:\Users\IAHERN~1\AppData\Local\Temp\ccTG0pDq.s 			page 22
+
+
+ 662 012e 30B1     		cbz	r0, .L38
+ 204:Core/Src/sm.c ****             discovery.device_state = DISCOVERY_ERROR;
+ 663              		.loc 1 204 13 is_stmt 1 view .LVU157
+ 664 0130 3B48     		ldr	r0, .L47+28
+ 665              	.LVL49:
+ 204:Core/Src/sm.c ****             discovery.device_state = DISCOVERY_ERROR;
+ 666              		.loc 1 204 13 is_stmt 0 view .LVU158
+ 667 0132 FFF7FEFF 		bl	printf
+ 668              	.LVL50:
+ 205:Core/Src/sm.c ****             break;
+ 669              		.loc 1 205 13 is_stmt 1 view .LVU159
+ 205:Core/Src/sm.c ****             break;
+ 670              		.loc 1 205 36 is_stmt 0 view .LVU160
+ 671 0136 334B     		ldr	r3, .L47
+ 672 0138 8022     		movs	r2, #128
+ 673 013a 1A82     		strh	r2, [r3, #16]	@ movhi
+ 206:Core/Src/sm.c ****         }
+ 674              		.loc 1 206 13 is_stmt 1 view .LVU161
+ 675 013c 9AE7     		b	.L22
+ 676              	.LVL51:
+ 677              	.L38:
+ 210:Core/Src/sm.c ****             discovery.device_state = WAIT_EVENT; /* wait for GAP procedure complete */
+ 678              		.loc 1 210 13 view .LVU162
+ 679 013e 3948     		ldr	r0, .L47+32
+ 680              	.LVL52:
+ 210:Core/Src/sm.c ****             discovery.device_state = WAIT_EVENT; /* wait for GAP procedure complete */
+ 681              		.loc 1 210 13 is_stmt 0 view .LVU163
+ 682 0140 FFF7FEFF 		bl	puts
+ 683              	.LVL53:
+ 211:Core/Src/sm.c ****         }
+ 684              		.loc 1 211 13 is_stmt 1 view .LVU164
+ 211:Core/Src/sm.c ****         }
+ 685              		.loc 1 211 36 is_stmt 0 view .LVU165
+ 686 0144 2F4B     		ldr	r3, .L47
+ 687 0146 0222     		movs	r2, #2
+ 688 0148 1A82     		strh	r2, [r3, #16]	@ movhi
+ 214:Core/Src/sm.c ****     case (DO_DIRECT_CONNECTION_PROC):
+ 689              		.loc 1 214 5 is_stmt 1 view .LVU166
+ 690 014a 93E7     		b	.L22
+ 691              	.LVL54:
+ 692              	.L28:
+ 218:Core/Src/sm.c ****         for (uint8_t i = 5; i > 0; i--)
+ 693              		.loc 1 218 9 view .LVU167
+ 694 014c 3648     		ldr	r0, .L47+36
+ 695 014e FFF7FEFF 		bl	printf
+ 696              	.LVL55:
+ 219:Core/Src/sm.c ****         {
+ 697              		.loc 1 219 9 view .LVU168
+ 698              	.LBB3:
+ 219:Core/Src/sm.c ****         {
+ 699              		.loc 1 219 14 view .LVU169
+ 219:Core/Src/sm.c ****         {
+ 700              		.loc 1 219 22 is_stmt 0 view .LVU170
+ 701 0152 0524     		movs	r4, #5
+ 702              	.LVL56:
+ 703              	.L39:
+ 219:Core/Src/sm.c ****         {
+ARM GAS  C:\Users\IAHERN~1\AppData\Local\Temp\ccTG0pDq.s 			page 23
+
+
+ 704              		.loc 1 219 31 is_stmt 1 discriminator 1 view .LVU171
+ 705 0154 44B1     		cbz	r4, .L46
+ 221:Core/Src/sm.c ****         }
+ 706              		.loc 1 221 13 view .LVU172
+ 707 0156 2B4B     		ldr	r3, .L47
+ 708 0158 2344     		add	r3, r3, r4
+ 709 015a 597A     		ldrb	r1, [r3, #9]	@ zero_extendqisi2
+ 710 015c 3348     		ldr	r0, .L47+40
+ 711 015e FFF7FEFF 		bl	printf
+ 712              	.LVL57:
+ 219:Core/Src/sm.c ****         {
+ 713              		.loc 1 219 37 discriminator 3 view .LVU173
+ 714 0162 013C     		subs	r4, r4, #1
+ 715              	.LVL58:
+ 219:Core/Src/sm.c ****         {
+ 716              		.loc 1 219 37 is_stmt 0 discriminator 3 view .LVU174
+ 717 0164 E4B2     		uxtb	r4, r4
+ 718              	.LVL59:
+ 219:Core/Src/sm.c ****         {
+ 719              		.loc 1 219 37 discriminator 3 view .LVU175
+ 720 0166 F5E7     		b	.L39
+ 721              	.L46:
+ 219:Core/Src/sm.c ****         {
+ 722              		.loc 1 219 37 discriminator 3 view .LVU176
+ 723              	.LBE3:
+ 223:Core/Src/sm.c ****         /* Do connection with first discovered device */
+ 724              		.loc 1 223 9 is_stmt 1 view .LVU177
+ 725 0168 264D     		ldr	r5, .L47
+ 726 016a 2C46     		mov	r4, r5
+ 727              	.LVL60:
+ 223:Core/Src/sm.c ****         /* Do connection with first discovered device */
+ 728              		.loc 1 223 9 is_stmt 0 view .LVU178
+ 729 016c 14F8091F 		ldrb	r1, [r4, #9]!	@ zero_extendqisi2
+ 730 0170 2F48     		ldr	r0, .L47+44
+ 731 0172 FFF7FEFF 		bl	printf
+ 732              	.LVL61:
+ 225:Core/Src/sm.c ****             discovery.device_found_address_type, discovery.device_found_address,
+ 733              		.loc 1 225 9 is_stmt 1 view .LVU179
+ 225:Core/Src/sm.c ****             discovery.device_found_address_type, discovery.device_found_address,
+ 734              		.loc 1 225 15 is_stmt 0 view .LVU180
+ 735 0176 4FF4FA63 		mov	r3, #2000
+ 736 017a 0693     		str	r3, [sp, #24]
+ 737 017c 0593     		str	r3, [sp, #20]
+ 738 017e 3C23     		movs	r3, #60
+ 739 0180 0493     		str	r3, [sp, #16]
+ 740 0182 0023     		movs	r3, #0
+ 741 0184 0393     		str	r3, [sp, #12]
+ 742 0186 2822     		movs	r2, #40
+ 743 0188 0292     		str	r2, [sp, #8]
+ 744 018a 0192     		str	r2, [sp, #4]
+ 745 018c 0093     		str	r3, [sp]
+ 746 018e 2346     		mov	r3, r4
+ 747 0190 2A7A     		ldrb	r2, [r5, #8]	@ zero_extendqisi2
+ 748 0192 4FF48041 		mov	r1, #16384
+ 749 0196 0846     		mov	r0, r1
+ 750 0198 FFF7FEFF 		bl	aci_gap_create_connection
+ 751              	.LVL62:
+ARM GAS  C:\Users\IAHERN~1\AppData\Local\Temp\ccTG0pDq.s 			page 24
+
+
+ 228:Core/Src/sm.c ****         {
+ 752              		.loc 1 228 9 is_stmt 1 view .LVU181
+ 228:Core/Src/sm.c ****         {
+ 753              		.loc 1 228 12 is_stmt 0 view .LVU182
+ 754 019c 0146     		mov	r1, r0
+ 755 019e 28B1     		cbz	r0, .L41
+ 230:Core/Src/sm.c ****             discovery.device_state = DISCOVERY_ERROR;
+ 756              		.loc 1 230 13 is_stmt 1 view .LVU183
+ 757 01a0 2448     		ldr	r0, .L47+48
+ 758              	.LVL63:
+ 230:Core/Src/sm.c ****             discovery.device_state = DISCOVERY_ERROR;
+ 759              		.loc 1 230 13 is_stmt 0 view .LVU184
+ 760 01a2 FFF7FEFF 		bl	printf
+ 761              	.LVL64:
+ 231:Core/Src/sm.c ****         }
+ 762              		.loc 1 231 13 is_stmt 1 view .LVU185
+ 231:Core/Src/sm.c ****         }
+ 763              		.loc 1 231 36 is_stmt 0 view .LVU186
+ 764 01a6 8022     		movs	r2, #128
+ 765 01a8 2A82     		strh	r2, [r5, #16]	@ movhi
+ 766 01aa 63E7     		b	.L22
+ 767              	.LVL65:
+ 768              	.L41:
+ 235:Core/Src/sm.c ****             discovery.device_state = WAIT_EVENT;
+ 769              		.loc 1 235 13 is_stmt 1 view .LVU187
+ 770 01ac 2248     		ldr	r0, .L47+52
+ 771              	.LVL66:
+ 235:Core/Src/sm.c ****             discovery.device_state = WAIT_EVENT;
+ 772              		.loc 1 235 13 is_stmt 0 view .LVU188
+ 773 01ae FFF7FEFF 		bl	puts
+ 774              	.LVL67:
+ 236:Core/Src/sm.c ****         }
+ 775              		.loc 1 236 13 is_stmt 1 view .LVU189
+ 236:Core/Src/sm.c ****         }
+ 776              		.loc 1 236 36 is_stmt 0 view .LVU190
+ 777 01b2 144B     		ldr	r3, .L47
+ 778 01b4 0222     		movs	r2, #2
+ 779 01b6 1A82     		strh	r2, [r3, #16]	@ movhi
+ 780 01b8 5CE7     		b	.L22
+ 781              	.LVL68:
+ 782              	.L30:
+ 243:Core/Src/sm.c ****     }
+ 783              		.loc 1 243 9 is_stmt 1 view .LVU191
+ 243:Core/Src/sm.c ****     }
+ 784              		.loc 1 243 32 is_stmt 0 view .LVU192
+ 785 01ba 124B     		ldr	r3, .L47
+ 786 01bc 0222     		movs	r2, #2
+ 787 01be 1A82     		strh	r2, [r3, #16]	@ movhi
+ 245:Core/Src/sm.c **** 
+ 788              		.loc 1 245 5 is_stmt 1 view .LVU193
+ 789 01c0 58E7     		b	.L22
+ 790              	.L27:
+ 255:Core/Src/sm.c **** 
+ 791              		.loc 1 255 9 view .LVU194
+ 792 01c2 0021     		movs	r1, #0
+ 793 01c4 0846     		mov	r0, r1
+ 794 01c6 FFF7FEFF 		bl	hci_le_set_scan_response_data
+ARM GAS  C:\Users\IAHERN~1\AppData\Local\Temp\ccTG0pDq.s 			page 25
+
+
+ 795              	.LVL69:
+ 258:Core/Src/sm.c ****         /*ret = aci_gap_set_discoverable(ADV_DATA_TYPE, ADV_INTERV_MIN, ADV_INTERV_MAX, PUBLIC_ADDR
+ 796              		.loc 1 258 9 view .LVU195
+ 258:Core/Src/sm.c ****         /*ret = aci_gap_set_discoverable(ADV_DATA_TYPE, ADV_INTERV_MIN, ADV_INTERV_MAX, PUBLIC_ADDR
+ 797              		.loc 1 258 15 is_stmt 0 view .LVU196
+ 798 01ca 1C4A     		ldr	r2, .L47+56
+ 799 01cc 1C4B     		ldr	r3, .L47+60
+ 800 01ce 1978     		ldrb	r1, [r3]	@ zero_extendqisi2
+ 801 01d0 0120     		movs	r0, #1
+ 802 01d2 FFF7FEFF 		bl	hidSetDeviceDiscoverable
+ 803              	.LVL70:
+ 264:Core/Src/sm.c ****             BLUENRG_PRINTF("Error in hidSetDeviceDiscoverable() 0x%02x\n", ret);
+ 804              		.loc 1 264 9 is_stmt 1 view .LVU197
+ 264:Core/Src/sm.c ****             BLUENRG_PRINTF("Error in hidSetDeviceDiscoverable() 0x%02x\n", ret);
+ 805              		.loc 1 264 12 is_stmt 0 view .LVU198
+ 806 01d6 0146     		mov	r1, r0
+ 807 01d8 30B1     		cbz	r0, .L42
+ 265:Core/Src/sm.c ****             discovery.device_state = DISCOVERY_ERROR;
+ 808              		.loc 1 265 13 is_stmt 1 view .LVU199
+ 809 01da 1A48     		ldr	r0, .L47+64
+ 810              	.LVL71:
+ 265:Core/Src/sm.c ****             discovery.device_state = DISCOVERY_ERROR;
+ 811              		.loc 1 265 13 is_stmt 0 view .LVU200
+ 812 01dc FFF7FEFF 		bl	printf
+ 813              	.LVL72:
+ 266:Core/Src/sm.c ****         }
+ 814              		.loc 1 266 13 is_stmt 1 view .LVU201
+ 266:Core/Src/sm.c ****         }
+ 815              		.loc 1 266 36 is_stmt 0 view .LVU202
+ 816 01e0 084B     		ldr	r3, .L47
+ 817 01e2 8022     		movs	r2, #128
+ 818 01e4 1A82     		strh	r2, [r3, #16]	@ movhi
+ 819 01e6 45E7     		b	.L22
+ 820              	.LVL73:
+ 821              	.L42:
+ 270:Core/Src/sm.c ****             discovery.startTime = HAL_GetTick();
+ 822              		.loc 1 270 13 is_stmt 1 view .LVU203
+ 823 01e8 1748     		ldr	r0, .L47+68
+ 824              	.LVL74:
+ 270:Core/Src/sm.c ****             discovery.startTime = HAL_GetTick();
+ 825              		.loc 1 270 13 is_stmt 0 view .LVU204
+ 826 01ea FFF7FEFF 		bl	puts
+ 827              	.LVL75:
+ 271:Core/Src/sm.c ****             discovery.check_disc_mode_timer = TRUE;
+ 828              		.loc 1 271 13 is_stmt 1 view .LVU205
+ 271:Core/Src/sm.c ****             discovery.check_disc_mode_timer = TRUE;
+ 829              		.loc 1 271 35 is_stmt 0 view .LVU206
+ 830 01ee FFF7FEFF 		bl	HAL_GetTick
+ 831              	.LVL76:
+ 271:Core/Src/sm.c ****             discovery.check_disc_mode_timer = TRUE;
+ 832              		.loc 1 271 33 discriminator 1 view .LVU207
+ 833 01f2 044B     		ldr	r3, .L47
+ 834 01f4 5860     		str	r0, [r3, #4]
+ 272:Core/Src/sm.c ****             discovery.check_disc_proc_timer = FALSE;
+ 835              		.loc 1 272 13 is_stmt 1 view .LVU208
+ 272:Core/Src/sm.c ****             discovery.check_disc_proc_timer = FALSE;
+ 836              		.loc 1 272 45 is_stmt 0 view .LVU209
+ARM GAS  C:\Users\IAHERN~1\AppData\Local\Temp\ccTG0pDq.s 			page 26
+
+
+ 837 01f6 0122     		movs	r2, #1
+ 838 01f8 5A70     		strb	r2, [r3, #1]
+ 273:Core/Src/sm.c ****             discovery.device_state = WAIT_TIMER_EXPIRED;
+ 839              		.loc 1 273 13 is_stmt 1 view .LVU210
+ 273:Core/Src/sm.c ****             discovery.device_state = WAIT_TIMER_EXPIRED;
+ 840              		.loc 1 273 45 is_stmt 0 view .LVU211
+ 841 01fa 0022     		movs	r2, #0
+ 842 01fc 1A70     		strb	r2, [r3]
+ 274:Core/Src/sm.c ****         }
+ 843              		.loc 1 274 13 is_stmt 1 view .LVU212
+ 274:Core/Src/sm.c ****         }
+ 844              		.loc 1 274 36 is_stmt 0 view .LVU213
+ 845 01fe 0422     		movs	r2, #4
+ 846 0200 1A82     		strh	r2, [r3, #16]	@ movhi
+ 847 0202 37E7     		b	.L22
+ 848              	.L48:
+ 849              		.align	2
+ 850              	.L47:
+ 851 0204 00000000 		.word	discovery
+ 852 0208 00000000 		.word	.LC7
+ 853 020c 14000000 		.word	.LC8
+ 854 0210 4C000000 		.word	.LC9
+ 855 0214 00000000 		.word	discovery_time
+ 856 0218 78000000 		.word	.LC10
+ 857 021c A8000000 		.word	.LC11
+ 858 0220 CC000000 		.word	.LC12
+ 859 0224 00010000 		.word	.LC13
+ 860 0228 28010000 		.word	.LC14
+ 861 022c 44010000 		.word	.LC15
+ 862 0230 4C010000 		.word	.LC16
+ 863 0234 54010000 		.word	.LC17
+ 864 0238 84010000 		.word	.LC18
+ 865 023c 00000000 		.word	local_name
+ 866 0240 00000000 		.word	Local_Name_Length
+ 867 0244 A4010000 		.word	.LC19
+ 868 0248 D0010000 		.word	.LC20
+ 869              		.cfi_endproc
+ 870              	.LFE138:
+ 872              		.section	.rodata.BLE_Process.str1.4,"aMS",%progbits,1
+ 873              		.align	2
+ 874              	.LC21:
+ 875 0000 70726F74 		.ascii	"protocol Mode was set to 1\015\000"
+ 875      6F636F6C 
+ 875      204D6F64 
+ 875      65207761 
+ 875      73207365 
+ 876              		.align	2
+ 877              	.LC22:
+ 878 001c 524F4C45 		.ascii	"ROLE SLAVE (mtu_exchanged %d, mtu_exchanged_wait %d"
+ 878      20534C41 
+ 878      56452028 
+ 878      6D74755F 
+ 878      65786368 
+ 879 004f 290D0A00 		.ascii	")\015\012\000"
+ 880 0053 00       		.align	2
+ 881              	.LC23:
+ 882 0054 6163695F 		.ascii	"aci_gatt_exchange_configuration error 0x%02x\015\012"
+ARM GAS  C:\Users\IAHERN~1\AppData\Local\Temp\ccTG0pDq.s 			page 27
+
+
+ 882      67617474 
+ 882      5F657863 
+ 882      68616E67 
+ 882      655F636F 
+ 883 0082 00       		.ascii	"\000"
+ 884 0083 00       		.align	2
+ 885              	.LC24:
+ 886 0084 20556E61 		.ascii	" Unable to read data from device\015\000"
+ 886      626C6520 
+ 886      746F2072 
+ 886      65616420 
+ 886      64617461 
+ 887 00a6 0000     		.align	2
+ 888              	.LC25:
+ 889 00a8 4E4F5449 		.ascii	"NOTIFICATIONS: %d\012\015\000"
+ 889      46494341 
+ 889      54494F4E 
+ 889      533A2025 
+ 889      640A0D00 
+ 890              		.align	2
+ 891              	.LC26:
+ 892 00bc 5F5F5F5F 		.ascii	"____Output Report: %d\012\015\000"
+ 892      4F757470 
+ 892      75742052 
+ 892      65706F72 
+ 892      743A2025 
+ 893              		.align	2
+ 894              	.LC27:
+ 895 00d4 54727969 		.ascii	"Trying to print smth\015\000"
+ 895      6E672074 
+ 895      6F207072 
+ 895      696E7420 
+ 895      736D7468 
+ 896              		.section	.text.BLE_Process,"ax",%progbits
+ 897              		.align	1
+ 898              		.global	BLE_Process
+ 899              		.syntax unified
+ 900              		.thumb
+ 901              		.thumb_func
+ 903              	BLE_Process:
+ 904              	.LFB137:
+  44:Core/Src/sm.c ****     uint8_t notifications_enabled_val=0;
+ 905              		.loc 1 44 1 is_stmt 1 view -0
+ 906              		.cfi_startproc
+ 907              		@ args = 0, pretend = 0, frame = 8
+ 908              		@ frame_needed = 0, uses_anonymous_args = 0
+ 909 0000 30B5     		push	{r4, r5, lr}
+ 910              		.cfi_def_cfa_offset 12
+ 911              		.cfi_offset 4, -12
+ 912              		.cfi_offset 5, -8
+ 913              		.cfi_offset 14, -4
+ 914 0002 85B0     		sub	sp, sp, #20
+ 915              		.cfi_def_cfa_offset 32
+  45:Core/Src/sm.c ****     uint16_t sizeNotifications_enabled_val=sizeof(notifications_enabled_val);
+ 916              		.loc 1 45 5 view .LVU215
+  45:Core/Src/sm.c ****     uint16_t sizeNotifications_enabled_val=sizeof(notifications_enabled_val);
+ 917              		.loc 1 45 13 is_stmt 0 view .LVU216
+ARM GAS  C:\Users\IAHERN~1\AppData\Local\Temp\ccTG0pDq.s 			page 28
+
+
+ 918 0004 0023     		movs	r3, #0
+ 919 0006 8DF80F30 		strb	r3, [sp, #15]
+  46:Core/Src/sm.c ****     uint8_t ret;
+ 920              		.loc 1 46 5 is_stmt 1 view .LVU217
+  46:Core/Src/sm.c ****     uint8_t ret;
+ 921              		.loc 1 46 14 is_stmt 0 view .LVU218
+ 922 000a 0123     		movs	r3, #1
+ 923 000c ADF80C30 		strh	r3, [sp, #12]	@ movhi
+  47:Core/Src/sm.c **** 	//uint8_t data[] = "s";
+ 924              		.loc 1 47 5 is_stmt 1 view .LVU219
+  50:Core/Src/sm.c **** 
+ 925              		.loc 1 50 2 view .LVU220
+ 926 0010 FFF7FEFF 		bl	hci_user_evt_proc
+ 927              	.LVL77:
+  52:Core/Src/sm.c **** 	{
+ 928              		.loc 1 52 2 view .LVU221
+  52:Core/Src/sm.c **** 	{
+ 929              		.loc 1 52 6 is_stmt 0 view .LVU222
+ 930 0014 424B     		ldr	r3, .L64
+ 931 0016 1B68     		ldr	r3, [r3]
+  52:Core/Src/sm.c **** 	{
+ 932              		.loc 1 52 5 view .LVU223
+ 933 0018 13F4807F 		tst	r3, #256
+ 934 001c 4DD1     		bne	.L58
+ 935              	.L50:
+  57:Core/Src/sm.c **** 	{
+ 936              		.loc 1 57 2 is_stmt 1 view .LVU224
+  57:Core/Src/sm.c **** 	{
+ 937              		.loc 1 57 6 is_stmt 0 view .LVU225
+ 938 001e 404B     		ldr	r3, .L64
+ 939 0020 1B68     		ldr	r3, [r3]
+  57:Core/Src/sm.c **** 	{
+ 940              		.loc 1 57 5 view .LVU226
+ 941 0022 13F4007F 		tst	r3, #512
+ 942 0026 03D0     		beq	.L51
+  57:Core/Src/sm.c **** 	{
+ 943              		.loc 1 57 29 discriminator 1 view .LVU227
+ 944 0028 3E4B     		ldr	r3, .L64+4
+ 945 002a 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+  57:Core/Src/sm.c **** 	{
+ 946              		.loc 1 57 26 discriminator 1 view .LVU228
+ 947 002c 002B     		cmp	r3, #0
+ 948 002e 47D0     		beq	.L59
+ 949              	.L51:
+  64:Core/Src/sm.c **** 	{
+ 950              		.loc 1 64 2 is_stmt 1 view .LVU229
+  64:Core/Src/sm.c **** 	{
+ 951              		.loc 1 64 6 is_stmt 0 view .LVU230
+ 952 0030 3B4B     		ldr	r3, .L64
+ 953 0032 1B68     		ldr	r3, [r3]
+  64:Core/Src/sm.c **** 	{
+ 954              		.loc 1 64 5 view .LVU231
+ 955 0034 13F4007F 		tst	r3, #512
+ 956 0038 34D0     		beq	.L52
+  66:Core/Src/sm.c **** 		{
+ 957              		.loc 1 66 3 is_stmt 1 view .LVU232
+  66:Core/Src/sm.c **** 		{
+ARM GAS  C:\Users\IAHERN~1\AppData\Local\Temp\ccTG0pDq.s 			page 29
+
+
+ 958              		.loc 1 66 22 is_stmt 0 view .LVU233
+ 959 003a 3B4B     		ldr	r3, .L64+8
+ 960 003c 1978     		ldrb	r1, [r3]	@ zero_extendqisi2
+  66:Core/Src/sm.c **** 		{
+ 961              		.loc 1 66 6 view .LVU234
+ 962 003e 19B9     		cbnz	r1, .L53
+  66:Core/Src/sm.c **** 		{
+ 963              		.loc 1 66 51 discriminator 1 view .LVU235
+ 964 0040 3A4B     		ldr	r3, .L64+12
+ 965 0042 1A78     		ldrb	r2, [r3]	@ zero_extendqisi2
+  66:Core/Src/sm.c **** 		{
+ 966              		.loc 1 66 28 discriminator 1 view .LVU236
+ 967 0044 002A     		cmp	r2, #0
+ 968 0046 4DD0     		beq	.L60
+ 969              	.L53:
+  79:Core/Src/sm.c ****         
+ 970              		.loc 1 79 9 is_stmt 1 view .LVU237
+ 971 0048 4FF47A70 		mov	r0, #1000
+ 972 004c FFF7FEFF 		bl	osDelay
+ 973              	.LVL78:
+  82:Core/Src/sm.c ****         if (ret != BLE_STATUS_SUCCESS) {
+ 974              		.loc 1 82 9 view .LVU238
+  82:Core/Src/sm.c ****         if (ret != BLE_STATUS_SUCCESS) {
+ 975              		.loc 1 82 15 is_stmt 0 view .LVU239
+ 976 0050 03AB     		add	r3, sp, #12
+ 977 0052 374A     		ldr	r2, .L64+16
+ 978 0054 1088     		ldrh	r0, [r2]
+ 979 0056 0230     		adds	r0, r0, #2
+ 980 0058 0DF10F02 		add	r2, sp, #15
+ 981 005c 0192     		str	r2, [sp, #4]
+ 982 005e 0093     		str	r3, [sp]
+ 983 0060 BDF80C20 		ldrh	r2, [sp, #12]
+ 984 0064 0021     		movs	r1, #0
+ 985 0066 80B2     		uxth	r0, r0
+ 986 0068 FFF7FEFF 		bl	aci_gatt_read_handle_value
+ 987              	.LVL79:
+  83:Core/Src/sm.c ****             printf(" Unable to read data from device\r\n");
+ 988              		.loc 1 83 9 is_stmt 1 view .LVU240
+  83:Core/Src/sm.c ****             printf(" Unable to read data from device\r\n");
+ 989              		.loc 1 83 12 is_stmt 0 view .LVU241
+ 990 006c 0028     		cmp	r0, #0
+ 991 006e 4AD1     		bne	.L61
+ 992              	.LVL80:
+ 993              	.L54:
+  86:Core/Src/sm.c **** 
+ 994              		.loc 1 86 9 is_stmt 1 view .LVU242
+ 995 0070 9DF80F10 		ldrb	r1, [sp, #15]	@ zero_extendqisi2
+ 996 0074 2F48     		ldr	r0, .L64+20
+ 997 0076 FFF7FEFF 		bl	printf
+ 998              	.LVL81:
+  88:Core/Src/sm.c ****         if (ret != BLE_STATUS_SUCCESS) {
+ 999              		.loc 1 88 9 view .LVU243
+  88:Core/Src/sm.c ****         if (ret != BLE_STATUS_SUCCESS) {
+ 1000              		.loc 1 88 15 is_stmt 0 view .LVU244
+ 1001 007a 03AB     		add	r3, sp, #12
+ 1002 007c 2E4A     		ldr	r2, .L64+24
+ 1003 007e 1088     		ldrh	r0, [r2]
+ARM GAS  C:\Users\IAHERN~1\AppData\Local\Temp\ccTG0pDq.s 			page 30
+
+
+ 1004 0080 0130     		adds	r0, r0, #1
+ 1005 0082 0DF10F02 		add	r2, sp, #15
+ 1006 0086 0192     		str	r2, [sp, #4]
+ 1007 0088 0093     		str	r3, [sp]
+ 1008 008a BDF80C20 		ldrh	r2, [sp, #12]
+ 1009 008e 0021     		movs	r1, #0
+ 1010 0090 80B2     		uxth	r0, r0
+ 1011 0092 FFF7FEFF 		bl	aci_gatt_read_handle_value
+ 1012              	.LVL82:
+  89:Core/Src/sm.c ****             printf(" Unable to read data from device\r\n");
+ 1013              		.loc 1 89 9 is_stmt 1 view .LVU245
+  89:Core/Src/sm.c ****             printf(" Unable to read data from device\r\n");
+ 1014              		.loc 1 89 12 is_stmt 0 view .LVU246
+ 1015 0096 0028     		cmp	r0, #0
+ 1016 0098 39D1     		bne	.L62
+ 1017              	.LVL83:
+ 1018              	.L55:
+  92:Core/Src/sm.c ****         
+ 1019              		.loc 1 92 9 is_stmt 1 view .LVU247
+ 1020 009a 9DF80F10 		ldrb	r1, [sp, #15]	@ zero_extendqisi2
+ 1021 009e 2748     		ldr	r0, .L64+28
+ 1022 00a0 FFF7FEFF 		bl	printf
+ 1023              	.LVL84:
+ 1024              	.L52:
+  95:Core/Src/sm.c **** 	{
+ 1025              		.loc 1 95 2 view .LVU248
+  95:Core/Src/sm.c **** 	{
+ 1026              		.loc 1 95 6 is_stmt 0 view .LVU249
+ 1027 00a4 1E4B     		ldr	r3, .L64
+ 1028 00a6 1B68     		ldr	r3, [r3]
+  95:Core/Src/sm.c **** 	{
+ 1029              		.loc 1 95 5 view .LVU250
+ 1030 00a8 13F4007F 		tst	r3, #512
+ 1031 00ac 03D0     		beq	.L49
+  95:Core/Src/sm.c **** 	{
+ 1032              		.loc 1 95 26 discriminator 1 view .LVU251
+ 1033 00ae 9DF80F30 		ldrb	r3, [sp, #15]	@ zero_extendqisi2
+ 1034 00b2 002B     		cmp	r3, #0
+ 1035 00b4 2FD1     		bne	.L63
+ 1036              	.L49:
+ 103:Core/Src/sm.c **** 
+ 1037              		.loc 1 103 1 view .LVU252
+ 1038 00b6 05B0     		add	sp, sp, #20
+ 1039              		.cfi_remember_state
+ 1040              		.cfi_def_cfa_offset 12
+ 1041              		@ sp needed
+ 1042 00b8 30BD     		pop	{r4, r5, pc}
+ 1043              	.L58:
+ 1044              		.cfi_restore_state
+  54:Core/Src/sm.c **** 	}
+ 1045              		.loc 1 54 3 is_stmt 1 view .LVU253
+ 1046 00ba FFF7FEFF 		bl	Connection_StateMachine
+ 1047              	.LVL85:
+ 1048 00be AEE7     		b	.L50
+ 1049              	.L59:
+  59:Core/Src/sm.c **** 		BLUENRG_PRINTF("protocol Mode was set to 1\r\n");
+ 1050              		.loc 1 59 3 view .LVU254
+ARM GAS  C:\Users\IAHERN~1\AppData\Local\Temp\ccTG0pDq.s 			page 31
+
+
+  59:Core/Src/sm.c **** 		BLUENRG_PRINTF("protocol Mode was set to 1\r\n");
+ 1051              		.loc 1 59 16 is_stmt 0 view .LVU255
+ 1052 00c0 1F4D     		ldr	r5, .L64+32
+ 1053 00c2 0124     		movs	r4, #1
+ 1054 00c4 2C70     		strb	r4, [r5]
+  60:Core/Src/sm.c **** 		aci_gatt_update_char_value(hid_service_handle, protocol_mode_char_handle, 0, 1, &protocolMode);
+ 1055              		.loc 1 60 3 is_stmt 1 view .LVU256
+ 1056 00c6 1F48     		ldr	r0, .L64+36
+ 1057 00c8 FFF7FEFF 		bl	puts
+ 1058              	.LVL86:
+  61:Core/Src/sm.c **** 		protocolModeSet = 1;
+ 1059              		.loc 1 61 3 view .LVU257
+ 1060 00cc 0095     		str	r5, [sp]
+ 1061 00ce 2346     		mov	r3, r4
+ 1062 00d0 0022     		movs	r2, #0
+ 1063 00d2 1D49     		ldr	r1, .L64+40
+ 1064 00d4 0988     		ldrh	r1, [r1]
+ 1065 00d6 1D48     		ldr	r0, .L64+44
+ 1066 00d8 0088     		ldrh	r0, [r0]
+ 1067 00da FFF7FEFF 		bl	aci_gatt_update_char_value
+ 1068              	.LVL87:
+  62:Core/Src/sm.c **** 	}
+ 1069              		.loc 1 62 3 view .LVU258
+  62:Core/Src/sm.c **** 	}
+ 1070              		.loc 1 62 19 is_stmt 0 view .LVU259
+ 1071 00de 114B     		ldr	r3, .L64+4
+ 1072 00e0 1C70     		strb	r4, [r3]
+ 1073 00e2 A5E7     		b	.L51
+ 1074              	.L60:
+  68:Core/Src/sm.c **** 				   mtu_exchanged, mtu_exchanged_wait);
+ 1075              		.loc 1 68 4 is_stmt 1 view .LVU260
+ 1076 00e4 1A48     		ldr	r0, .L64+48
+ 1077 00e6 FFF7FEFF 		bl	printf
+ 1078              	.LVL88:
+  71:Core/Src/sm.c **** 			ret = aci_gatt_exchange_config(connection_handle);
+ 1079              		.loc 1 71 4 view .LVU261
+  71:Core/Src/sm.c **** 			ret = aci_gatt_exchange_config(connection_handle);
+ 1080              		.loc 1 71 23 is_stmt 0 view .LVU262
+ 1081 00ea 104B     		ldr	r3, .L64+12
+ 1082 00ec 0122     		movs	r2, #1
+ 1083 00ee 1A70     		strb	r2, [r3]
+  72:Core/Src/sm.c **** 			if (ret != BLE_STATUS_SUCCESS)
+ 1084              		.loc 1 72 4 is_stmt 1 view .LVU263
+  72:Core/Src/sm.c **** 			if (ret != BLE_STATUS_SUCCESS)
+ 1085              		.loc 1 72 10 is_stmt 0 view .LVU264
+ 1086 00f0 184B     		ldr	r3, .L64+52
+ 1087 00f2 1888     		ldrh	r0, [r3]
+ 1088 00f4 FFF7FEFF 		bl	aci_gatt_exchange_config
+ 1089              	.LVL89:
+  73:Core/Src/sm.c **** 			{
+ 1090              		.loc 1 73 4 is_stmt 1 view .LVU265
+  73:Core/Src/sm.c **** 			{
+ 1091              		.loc 1 73 7 is_stmt 0 view .LVU266
+ 1092 00f8 0146     		mov	r1, r0
+ 1093 00fa 0028     		cmp	r0, #0
+ 1094 00fc A4D0     		beq	.L53
+  75:Core/Src/sm.c **** 			}
+ARM GAS  C:\Users\IAHERN~1\AppData\Local\Temp\ccTG0pDq.s 			page 32
+
+
+ 1095              		.loc 1 75 5 is_stmt 1 view .LVU267
+ 1096 00fe 1648     		ldr	r0, .L64+56
+ 1097              	.LVL90:
+  75:Core/Src/sm.c **** 			}
+ 1098              		.loc 1 75 5 is_stmt 0 view .LVU268
+ 1099 0100 FFF7FEFF 		bl	printf
+ 1100              	.LVL91:
+  75:Core/Src/sm.c **** 			}
+ 1101              		.loc 1 75 5 view .LVU269
+ 1102 0104 A0E7     		b	.L53
+ 1103              	.LVL92:
+ 1104              	.L61:
+  84:Core/Src/sm.c ****         }
+ 1105              		.loc 1 84 13 is_stmt 1 view .LVU270
+ 1106 0106 1548     		ldr	r0, .L64+60
+ 1107              	.LVL93:
+  84:Core/Src/sm.c ****         }
+ 1108              		.loc 1 84 13 is_stmt 0 view .LVU271
+ 1109 0108 FFF7FEFF 		bl	puts
+ 1110              	.LVL94:
+ 1111 010c B0E7     		b	.L54
+ 1112              	.LVL95:
+ 1113              	.L62:
+  90:Core/Src/sm.c ****         }
+ 1114              		.loc 1 90 13 is_stmt 1 view .LVU272
+ 1115 010e 1348     		ldr	r0, .L64+60
+ 1116              	.LVL96:
+  90:Core/Src/sm.c ****         }
+ 1117              		.loc 1 90 13 is_stmt 0 view .LVU273
+ 1118 0110 FFF7FEFF 		bl	puts
+ 1119              	.LVL97:
+ 1120 0114 C1E7     		b	.L55
+ 1121              	.LVL98:
+ 1122              	.L63:
+  97:Core/Src/sm.c **** 		//status = osMessageQueueGet(mssgQ, &rx_buffer[rx_index], 0, 0);
+ 1123              		.loc 1 97 3 is_stmt 1 view .LVU274
+ 1124 0116 1248     		ldr	r0, .L64+64
+ 1125 0118 FFF7FEFF 		bl	puts
+ 1126              	.LVL99:
+ 103:Core/Src/sm.c **** 
+ 1127              		.loc 1 103 1 is_stmt 0 view .LVU275
+ 1128 011c CBE7     		b	.L49
+ 1129              	.L65:
+ 1130 011e 00BF     		.align	2
+ 1131              	.L64:
+ 1132 0120 00000000 		.word	app_flags
+ 1133 0124 00000000 		.word	protocolModeSet
+ 1134 0128 00000000 		.word	mtu_exchanged
+ 1135 012c 00000000 		.word	mtu_exchanged_wait
+ 1136 0130 00000000 		.word	input_report_char_handle
+ 1137 0134 A8000000 		.word	.LC25
+ 1138 0138 00000000 		.word	output_report_char_handle
+ 1139 013c BC000000 		.word	.LC26
+ 1140 0140 00000000 		.word	protocolMode
+ 1141 0144 00000000 		.word	.LC21
+ 1142 0148 00000000 		.word	protocol_mode_char_handle
+ 1143 014c 00000000 		.word	hid_service_handle
+ARM GAS  C:\Users\IAHERN~1\AppData\Local\Temp\ccTG0pDq.s 			page 33
+
+
+ 1144 0150 1C000000 		.word	.LC22
+ 1145 0154 00000000 		.word	connection_handle
+ 1146 0158 54000000 		.word	.LC23
+ 1147 015c 84000000 		.word	.LC24
+ 1148 0160 D4000000 		.word	.LC27
+ 1149              		.cfi_endproc
+ 1150              	.LFE137:
+ 1152              		.global	Local_Name_Length
+ 1153              		.section	.data.Local_Name_Length,"aw"
+ 1156              	Local_Name_Length:
+ 1157 0000 0D       		.byte	13
+ 1158              		.global	write_char_len
+ 1159              		.section	.bss.write_char_len,"aw",%nobits
+ 1160              		.align	1
+ 1163              	write_char_len:
+ 1164 0000 0000     		.space	2
+ 1165              		.global	protocolModeSet
+ 1166              		.section	.bss.protocolModeSet,"aw",%nobits
+ 1169              	protocolModeSet:
+ 1170 0000 00       		.space	1
+ 1171              		.global	mtu_exchanged_wait
+ 1172              		.section	.bss.mtu_exchanged_wait,"aw",%nobits
+ 1175              	mtu_exchanged_wait:
+ 1176 0000 00       		.space	1
+ 1177              		.global	mtu_exchanged
+ 1178              		.section	.bss.mtu_exchanged,"aw",%nobits
+ 1181              	mtu_exchanged:
+ 1182 0000 00       		.space	1
+ 1183              		.global	discovery_time
+ 1184              		.section	.data.discovery_time,"aw"
+ 1185              		.align	1
+ 1188              	discovery_time:
+ 1189 0000 B80B     		.short	3000
+ 1190              		.global	protocolMode
+ 1191              		.section	.bss.protocolMode,"aw",%nobits
+ 1194              	protocolMode:
+ 1195 0000 00       		.space	1
+ 1196              		.global	connection_handle
+ 1197              		.section	.bss.connection_handle,"aw",%nobits
+ 1198              		.align	1
+ 1201              	connection_handle:
+ 1202 0000 0000     		.space	2
+ 1203              		.global	app_flags
+ 1204              		.section	.data.app_flags,"aw"
+ 1205              		.align	2
+ 1208              	app_flags:
+ 1209 0000 00010000 		.word	256
+ 1210              		.text
+ 1211              	.Letext0:
+ 1212              		.file 2 "C:/Users/iahernandez/AppData/Roaming/Code/User/globalStorage/bmd.stm32-for-vscode/@xpack-
+ 1213              		.file 3 "C:/Users/iahernandez/AppData/Roaming/Code/User/globalStorage/bmd.stm32-for-vscode/@xpack-
+ 1214              		.file 4 "C:/Users/iahernandez/AppData/Roaming/Code/User/globalStorage/bmd.stm32-for-vscode/@xpack-
+ 1215              		.file 5 "C:/Users/iahernandez/AppData/Roaming/Code/User/globalStorage/bmd.stm32-for-vscode/@xpack-
+ 1216              		.file 6 "C:/Users/iahernandez/AppData/Roaming/Code/User/globalStorage/bmd.stm32-for-vscode/@xpack-
+ 1217              		.file 7 "C:/Users/iahernandez/AppData/Roaming/Code/User/globalStorage/bmd.stm32-for-vscode/@xpack-
+ 1218              		.file 8 "C:/Users/iahernandez/AppData/Roaming/Code/User/globalStorage/bmd.stm32-for-vscode/@xpack-
+ 1219              		.file 9 "Middlewares/ST/BlueNRG-2/includes/bluenrg1_types.h"
+ARM GAS  C:\Users\IAHERN~1\AppData\Local\Temp\ccTG0pDq.s 			page 34
+
+
+ 1220              		.file 10 "Core/Inc/callbacks.h"
+ 1221              		.file 11 "Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2/cmsis_os2.h"
+ 1222              		.file 12 "C:/Users/iahernandez/AppData/Roaming/Code/User/globalStorage/bmd.stm32-for-vscode/@xpack
+ 1223              		.file 13 "Middlewares/ST/BlueNRG-2/includes/bluenrg1_gap_aci.h"
+ 1224              		.file 14 "Middlewares/ST/BlueNRG-2/includes/bluenrg1_hci_le.h"
+ 1225              		.file 15 "Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal.h"
+ 1226              		.file 16 "Middlewares/ST/BlueNRG-2/includes/bluenrg1_gatt_aci.h"
+ 1227              		.file 17 "<built-in>"
+ 1228              		.file 18 "Middlewares/ST/BlueNRG-2/includes/hci.h"
+ARM GAS  C:\Users\IAHERN~1\AppData\Local\Temp\ccTG0pDq.s 			page 35
+
+
+DEFINED SYMBOLS
+                            *ABS*:00000000 sm.c
+C:\Users\IAHERN~1\AppData\Local\Temp\ccTG0pDq.s:21     .rodata.hidSetDeviceDiscoverable.str1.4:00000000 $d
+C:\Users\IAHERN~1\AppData\Local\Temp\ccTG0pDq.s:37     .text.hidSetDeviceDiscoverable:00000000 $t
+C:\Users\IAHERN~1\AppData\Local\Temp\ccTG0pDq.s:43     .text.hidSetDeviceDiscoverable:00000000 hidSetDeviceDiscoverable
+C:\Users\IAHERN~1\AppData\Local\Temp\ccTG0pDq.s:186    .text.hidSetDeviceDiscoverable:00000090 $d
+C:\Users\IAHERN~1\AppData\Local\Temp\ccTG0pDq.s:197    .rodata.receiveData.str1.4:00000000 $d
+C:\Users\IAHERN~1\AppData\Local\Temp\ccTG0pDq.s:204    .text.receiveData:00000000 $t
+C:\Users\IAHERN~1\AppData\Local\Temp\ccTG0pDq.s:210    .text.receiveData:00000000 receiveData
+C:\Users\IAHERN~1\AppData\Local\Temp\ccTG0pDq.s:272    .text.receiveData:00000030 $d
+C:\Users\IAHERN~1\AppData\Local\Temp\ccTG0pDq.s:279    .text.Reset_DiscoveryContext:00000000 $t
+C:\Users\IAHERN~1\AppData\Local\Temp\ccTG0pDq.s:285    .text.Reset_DiscoveryContext:00000000 Reset_DiscoveryContext
+C:\Users\IAHERN~1\AppData\Local\Temp\ccTG0pDq.s:338    .text.Reset_DiscoveryContext:00000030 $d
+C:\Users\IAHERN~1\AppData\Local\Temp\ccTG0pDq.s:1181   .bss.mtu_exchanged:00000000 mtu_exchanged
+C:\Users\IAHERN~1\AppData\Local\Temp\ccTG0pDq.s:1175   .bss.mtu_exchanged_wait:00000000 mtu_exchanged_wait
+C:\Users\IAHERN~1\AppData\Local\Temp\ccTG0pDq.s:1163   .bss.write_char_len:00000000 write_char_len
+C:\Users\IAHERN~1\AppData\Local\Temp\ccTG0pDq.s:347    .rodata.Connection_StateMachine.str1.4:00000000 $d
+C:\Users\IAHERN~1\AppData\Local\Temp\ccTG0pDq.s:393    .text.Connection_StateMachine:00000000 $t
+C:\Users\IAHERN~1\AppData\Local\Temp\ccTG0pDq.s:399    .text.Connection_StateMachine:00000000 Connection_StateMachine
+C:\Users\IAHERN~1\AppData\Local\Temp\ccTG0pDq.s:424    .text.Connection_StateMachine:00000014 $d
+C:\Users\IAHERN~1\AppData\Local\Temp\ccTG0pDq.s:457    .text.Connection_StateMachine:00000056 $t
+C:\Users\IAHERN~1\AppData\Local\Temp\ccTG0pDq.s:851    .text.Connection_StateMachine:00000204 $d
+C:\Users\IAHERN~1\AppData\Local\Temp\ccTG0pDq.s:1188   .data.discovery_time:00000000 discovery_time
+C:\Users\IAHERN~1\AppData\Local\Temp\ccTG0pDq.s:1156   .data.Local_Name_Length:00000000 Local_Name_Length
+C:\Users\IAHERN~1\AppData\Local\Temp\ccTG0pDq.s:873    .rodata.BLE_Process.str1.4:00000000 $d
+C:\Users\IAHERN~1\AppData\Local\Temp\ccTG0pDq.s:897    .text.BLE_Process:00000000 $t
+C:\Users\IAHERN~1\AppData\Local\Temp\ccTG0pDq.s:903    .text.BLE_Process:00000000 BLE_Process
+C:\Users\IAHERN~1\AppData\Local\Temp\ccTG0pDq.s:1132   .text.BLE_Process:00000120 $d
+C:\Users\IAHERN~1\AppData\Local\Temp\ccTG0pDq.s:1208   .data.app_flags:00000000 app_flags
+C:\Users\IAHERN~1\AppData\Local\Temp\ccTG0pDq.s:1169   .bss.protocolModeSet:00000000 protocolModeSet
+C:\Users\IAHERN~1\AppData\Local\Temp\ccTG0pDq.s:1194   .bss.protocolMode:00000000 protocolMode
+C:\Users\IAHERN~1\AppData\Local\Temp\ccTG0pDq.s:1201   .bss.connection_handle:00000000 connection_handle
+C:\Users\IAHERN~1\AppData\Local\Temp\ccTG0pDq.s:1160   .bss.write_char_len:00000000 $d
+C:\Users\IAHERN~1\AppData\Local\Temp\ccTG0pDq.s:1170   .bss.protocolModeSet:00000000 $d
+C:\Users\IAHERN~1\AppData\Local\Temp\ccTG0pDq.s:1176   .bss.mtu_exchanged_wait:00000000 $d
+C:\Users\IAHERN~1\AppData\Local\Temp\ccTG0pDq.s:1182   .bss.mtu_exchanged:00000000 $d
+C:\Users\IAHERN~1\AppData\Local\Temp\ccTG0pDq.s:1185   .data.discovery_time:00000000 $d
+C:\Users\IAHERN~1\AppData\Local\Temp\ccTG0pDq.s:1195   .bss.protocolMode:00000000 $d
+C:\Users\IAHERN~1\AppData\Local\Temp\ccTG0pDq.s:1198   .bss.connection_handle:00000000 $d
+C:\Users\IAHERN~1\AppData\Local\Temp\ccTG0pDq.s:1205   .data.app_flags:00000000 $d
+
+UNDEFINED SYMBOLS
+puts
+aci_gap_set_limited_discoverable
+printf
+aci_gap_set_discoverable
+advtServUUID
+advtServUUIDlen
+putchar
+fflush
+_impure_ptr
+discovery
+device_role
+aci_gap_start_general_discovery_proc
+HAL_GetTick
+aci_gap_set_non_discoverable
+aci_gap_terminate_gap_proc
+ARM GAS  C:\Users\IAHERN~1\AppData\Local\Temp\ccTG0pDq.s 			page 36
+
+
+aci_gap_create_connection
+hci_le_set_scan_response_data
+local_name
+hci_user_evt_proc
+osDelay
+aci_gatt_read_handle_value
+aci_gatt_update_char_value
+aci_gatt_exchange_config
+input_report_char_handle
+output_report_char_handle
+protocol_mode_char_handle
+hid_service_handle

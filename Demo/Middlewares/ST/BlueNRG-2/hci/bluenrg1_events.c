@@ -806,6 +806,7 @@ tBleStatus aci_gap_pairing_complete_event_process(uint8_t *buffer_in)
 
 tBleStatus aci_gap_pass_key_req_event_process(uint8_t *buffer_in)
 {
+  printf("aci_gap_pass_key_req_event_process");
   tBleStatus status = BLE_STATUS_SUCCESS;
   /* Input params */
   aci_gap_pass_key_req_event_rp0 *rp0 = (aci_gap_pass_key_req_event_rp0 *)buffer_in;
@@ -1942,6 +1943,7 @@ tBleStatus hci_le_long_term_key_request_event_process(uint8_t *buffer_in)
 {
   tBleStatus status = BLE_STATUS_SUCCESS;
   /* Input params */
+  printf("hci_le_long_term_key_request_event_process");
   hci_le_long_term_key_request_event_rp0 *rp0 = (hci_le_long_term_key_request_event_rp0 *)buffer_in;
   hci_le_long_term_key_request_event(rp0->Connection_Handle,
                                      rp0->Random_Number,

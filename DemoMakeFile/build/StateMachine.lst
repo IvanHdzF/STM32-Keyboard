@@ -1,0 +1,537 @@
+ARM GAS  C:\Users\IAHERN~1\AppData\Local\Temp\cc9U3NYg.s 			page 1
+
+
+   1              		.cpu cortex-m4
+   2              		.arch armv7e-m
+   3              		.fpu fpv4-sp-d16
+   4              		.eabi_attribute 27, 1
+   5              		.eabi_attribute 28, 1
+   6              		.eabi_attribute 20, 1
+   7              		.eabi_attribute 21, 1
+   8              		.eabi_attribute 23, 3
+   9              		.eabi_attribute 24, 1
+  10              		.eabi_attribute 25, 1
+  11              		.eabi_attribute 26, 1
+  12              		.eabi_attribute 30, 1
+  13              		.eabi_attribute 34, 1
+  14              		.eabi_attribute 18, 4
+  15              		.file	"StateMachine.c"
+  16              		.text
+  17              	.Ltext0:
+  18              		.cfi_sections	.debug_frame
+  19              		.file 1 "Core/Src/StateMachine.c"
+  20              		.section	.text.handleSM_NORMAL,"ax",%progbits
+  21              		.align	1
+  22              		.global	handleSM_NORMAL
+  23              		.syntax unified
+  24              		.thumb
+  25              		.thumb_func
+  27              	handleSM_NORMAL:
+  28              	.LFB136:
+   1:Core/Src/StateMachine.c **** /*
+   2:Core/Src/StateMachine.c ****  * StateMachine.c
+   3:Core/Src/StateMachine.c ****  *
+   4:Core/Src/StateMachine.c ****  *  Created on: Jan 25, 2024
+   5:Core/Src/StateMachine.c ****  *      Author: rjmendez
+   6:Core/Src/StateMachine.c ****  */
+   7:Core/Src/StateMachine.c **** #include "main.h"
+   8:Core/Src/StateMachine.c **** #include "StateMachine.h"
+   9:Core/Src/StateMachine.c **** #include "cmsis_os2.h"
+  10:Core/Src/StateMachine.c **** #include "Keyboard.h"
+  11:Core/Src/StateMachine.c **** 
+  12:Core/Src/StateMachine.c **** UART_HandleTypeDef *SM_uart_Port;
+  13:Core/Src/StateMachine.c **** 
+  14:Core/Src/StateMachine.c **** SM_Status currentState;
+  15:Core/Src/StateMachine.c **** osEventFlagsId_t flagsId;
+  16:Core/Src/StateMachine.c **** 
+  17:Core/Src/StateMachine.c **** osThreadId_t threadId;
+  18:Core/Src/StateMachine.c **** 
+  19:Core/Src/StateMachine.c **** Event flags;
+  20:Core/Src/StateMachine.c **** 
+  21:Core/Src/StateMachine.c **** // Define state-specific action functions
+  22:Core/Src/StateMachine.c **** void handleSM_NORMAL(void);
+  23:Core/Src/StateMachine.c **** void handleSM_IDLE(void);
+  24:Core/Src/StateMachine.c **** void handleSM_SLEEP(void);
+  25:Core/Src/StateMachine.c **** 
+  26:Core/Src/StateMachine.c **** SM_Status nextState[3][3]= {
+  27:Core/Src/StateMachine.c **** 		{SM_NORMAL, SM_IDLE},
+  28:Core/Src/StateMachine.c **** 		{SM_NORMAL,SM_IDLE,SM_SLEEP},
+  29:Core/Src/StateMachine.c **** 		{SM_NORMAL}
+  30:Core/Src/StateMachine.c **** };
+ARM GAS  C:\Users\IAHERN~1\AppData\Local\Temp\cc9U3NYg.s 			page 2
+
+
+  31:Core/Src/StateMachine.c **** 
+  32:Core/Src/StateMachine.c **** void (*stateActions[3])(void) = {
+  33:Core/Src/StateMachine.c ****     handleSM_NORMAL,
+  34:Core/Src/StateMachine.c ****     handleSM_IDLE,
+  35:Core/Src/StateMachine.c ****     handleSM_SLEEP
+  36:Core/Src/StateMachine.c **** };
+  37:Core/Src/StateMachine.c **** 
+  38:Core/Src/StateMachine.c **** void SM_Init(UART_HandleTypeDef *huart)
+  39:Core/Src/StateMachine.c **** {
+  40:Core/Src/StateMachine.c **** 
+  41:Core/Src/StateMachine.c **** 	SM_uart_Port = huart;
+  42:Core/Src/StateMachine.c **** 	currentState = SM_NORMAL;
+  43:Core/Src/StateMachine.c **** 
+  44:Core/Src/StateMachine.c **** 	if(osThreadNew(runStateMachine, NULL, NULL) == NULL )
+  45:Core/Src/StateMachine.c **** 	{
+  46:Core/Src/StateMachine.c **** 		while(1);
+  47:Core/Src/StateMachine.c **** 	}
+  48:Core/Src/StateMachine.c **** 
+  49:Core/Src/StateMachine.c **** 	// Set event flags
+  50:Core/Src/StateMachine.c **** 	flagsId = osEventFlagsNew(NULL);
+  51:Core/Src/StateMachine.c **** 	if(flagsId == NULL)
+  52:Core/Src/StateMachine.c **** 	{
+  53:Core/Src/StateMachine.c **** 		while(1);
+  54:Core/Src/StateMachine.c **** 	}
+  55:Core/Src/StateMachine.c **** 
+  56:Core/Src/StateMachine.c **** }
+  57:Core/Src/StateMachine.c **** 
+  58:Core/Src/StateMachine.c **** // Main state machine execution loop
+  59:Core/Src/StateMachine.c **** void runStateMachine(void *argument) {
+  60:Core/Src/StateMachine.c **** 
+  61:Core/Src/StateMachine.c **** 	while(1){
+  62:Core/Src/StateMachine.c **** 		osEventFlagsWait(flagsId, 0x11U, osFlagsWaitAny, osWaitForever);
+  63:Core/Src/StateMachine.c **** 		osDelay(10U);
+  64:Core/Src/StateMachine.c **** 		Event event=0;
+  65:Core/Src/StateMachine.c **** 		osDelay(10U);
+  66:Core/Src/StateMachine.c **** 
+  67:Core/Src/StateMachine.c **** 		//HAL_UART_Transmit(SM_uart_Port, setMssg, sizeof(setMssg), HAL_MAX_DELAY);
+  68:Core/Src/StateMachine.c **** 		switch(eventFlags)
+  69:Core/Src/StateMachine.c **** 		{
+  70:Core/Src/StateMachine.c **** 			case 0x00000001U:
+  71:Core/Src/StateMachine.c **** 				event = SM_NORMAL;
+  72:Core/Src/StateMachine.c **** 				break;
+  73:Core/Src/StateMachine.c **** 			case 0x00000010U:
+  74:Core/Src/StateMachine.c **** 				event = SM_IDLE;
+  75:Core/Src/StateMachine.c **** 				break;
+  76:Core/Src/StateMachine.c **** 			case 0x00000100U:
+  77:Core/Src/StateMachine.c **** 				event = SM_SLEEP;
+  78:Core/Src/StateMachine.c **** 				break;
+  79:Core/Src/StateMachine.c **** 		}
+  80:Core/Src/StateMachine.c **** 
+  81:Core/Src/StateMachine.c **** 		// Get the next state based on the current state and event
+  82:Core/Src/StateMachine.c **** 		SM_Status afterState = nextState[currentState][event];
+  83:Core/Src/StateMachine.c **** 
+  84:Core/Src/StateMachine.c **** 		// Execute the action associated with the current state
+  85:Core/Src/StateMachine.c **** 		stateActions[currentState]();
+  86:Core/Src/StateMachine.c **** 
+  87:Core/Src/StateMachine.c **** 		// Transition to the next state
+ARM GAS  C:\Users\IAHERN~1\AppData\Local\Temp\cc9U3NYg.s 			page 3
+
+
+  88:Core/Src/StateMachine.c **** 		currentState = afterState;
+  89:Core/Src/StateMachine.c **** 	}
+  90:Core/Src/StateMachine.c **** }
+  91:Core/Src/StateMachine.c **** 
+  92:Core/Src/StateMachine.c **** // Define state-specific action functions
+  93:Core/Src/StateMachine.c **** void handleSM_NORMAL(void) {
+  29              		.loc 1 93 28 view -0
+  30              		.cfi_startproc
+  31              		@ args = 0, pretend = 0, frame = 0
+  32              		@ frame_needed = 0, uses_anonymous_args = 0
+  33              		@ link register save eliminated.
+  94:Core/Src/StateMachine.c ****     // Perform actions specific to the normal state
+  95:Core/Src/StateMachine.c **** 	//uint8_t mssg[] = "NORMAL STATE \t";
+  96:Core/Src/StateMachine.c **** 	//HAL_UART_Transmit(SM_uart_Port, mssg, sizeof(mssg), HAL_MAX_DELAY);
+  97:Core/Src/StateMachine.c **** }
+  34              		.loc 1 97 1 view .LVU1
+  35 0000 7047     		bx	lr
+  36              		.cfi_endproc
+  37              	.LFE136:
+  39              		.section	.text.handleSM_IDLE,"ax",%progbits
+  40              		.align	1
+  41              		.global	handleSM_IDLE
+  42              		.syntax unified
+  43              		.thumb
+  44              		.thumb_func
+  46              	handleSM_IDLE:
+  47              	.LFB137:
+  98:Core/Src/StateMachine.c **** 
+  99:Core/Src/StateMachine.c **** void handleSM_IDLE(void) {
+  48              		.loc 1 99 26 view -0
+  49              		.cfi_startproc
+  50              		@ args = 0, pretend = 0, frame = 0
+  51              		@ frame_needed = 0, uses_anonymous_args = 0
+  52              		@ link register save eliminated.
+ 100:Core/Src/StateMachine.c ****     // Perform actions specific to the idle state
+ 101:Core/Src/StateMachine.c **** 	//uint8_t mssg2[] = "IDLE STATE \t";
+ 102:Core/Src/StateMachine.c **** 	//HAL_UART_Transmit(SM_uart_Port, mssg2, sizeof(mssg2), HAL_MAX_DELAY);
+ 103:Core/Src/StateMachine.c **** }
+  53              		.loc 1 103 1 view .LVU3
+  54 0000 7047     		bx	lr
+  55              		.cfi_endproc
+  56              	.LFE137:
+  58              		.section	.text.runStateMachine,"ax",%progbits
+  59              		.align	1
+  60              		.global	runStateMachine
+  61              		.syntax unified
+  62              		.thumb
+  63              		.thumb_func
+  65              	runStateMachine:
+  66              	.LFB135:
+  59:Core/Src/StateMachine.c **** 
+  67              		.loc 1 59 38 view -0
+  68              		.cfi_startproc
+  69              		@ args = 0, pretend = 0, frame = 0
+  70              		@ frame_needed = 0, uses_anonymous_args = 0
+  71              	.LVL0:
+  59:Core/Src/StateMachine.c **** 
+ARM GAS  C:\Users\IAHERN~1\AppData\Local\Temp\cc9U3NYg.s 			page 4
+
+
+  72              		.loc 1 59 38 is_stmt 0 view .LVU5
+  73 0000 38B5     		push	{r3, r4, r5, lr}
+  74              		.cfi_def_cfa_offset 16
+  75              		.cfi_offset 3, -16
+  76              		.cfi_offset 4, -12
+  77              		.cfi_offset 5, -8
+  78              		.cfi_offset 14, -4
+  79 0002 0CE0     		b	.L5
+  80              	.LVL1:
+  81              	.L6:
+  82              	.LBB2:
+  74:Core/Src/StateMachine.c **** 				break;
+  83              		.loc 1 74 11 view .LVU6
+  84 0004 0120     		movs	r0, #1
+  85              	.L4:
+  86              	.LVL2:
+  82:Core/Src/StateMachine.c **** 
+  87              		.loc 1 82 3 is_stmt 1 view .LVU7
+  82:Core/Src/StateMachine.c **** 
+  88              		.loc 1 82 49 is_stmt 0 view .LVU8
+  89 0006 124C     		ldr	r4, .L9
+  90 0008 2378     		ldrb	r3, [r4]	@ zero_extendqisi2
+  82:Core/Src/StateMachine.c **** 
+  91              		.loc 1 82 13 view .LVU9
+  92 000a 03EB4301 		add	r1, r3, r3, lsl #1
+  93 000e 114A     		ldr	r2, .L9+4
+  94 0010 0A44     		add	r2, r2, r1
+  95 0012 155C     		ldrb	r5, [r2, r0]	@ zero_extendqisi2
+  96              	.LVL3:
+  85:Core/Src/StateMachine.c **** 
+  97              		.loc 1 85 3 is_stmt 1 view .LVU10
+  85:Core/Src/StateMachine.c **** 
+  98              		.loc 1 85 15 is_stmt 0 view .LVU11
+  99 0014 104A     		ldr	r2, .L9+8
+ 100 0016 52F82330 		ldr	r3, [r2, r3, lsl #2]
+  85:Core/Src/StateMachine.c **** 
+ 101              		.loc 1 85 3 view .LVU12
+ 102 001a 9847     		blx	r3
+ 103              	.LVL4:
+  88:Core/Src/StateMachine.c **** 	}
+ 104              		.loc 1 88 3 is_stmt 1 view .LVU13
+  88:Core/Src/StateMachine.c **** 	}
+ 105              		.loc 1 88 16 is_stmt 0 view .LVU14
+ 106 001c 2570     		strb	r5, [r4]
+ 107              	.LBE2:
+  61:Core/Src/StateMachine.c **** 		osEventFlagsWait(flagsId, 0x11U, osFlagsWaitAny, osWaitForever);
+ 108              		.loc 1 61 7 is_stmt 1 view .LVU15
+ 109              	.LVL5:
+ 110              	.L5:
+  61:Core/Src/StateMachine.c **** 		osEventFlagsWait(flagsId, 0x11U, osFlagsWaitAny, osWaitForever);
+ 111              		.loc 1 61 2 view .LVU16
+ 112              	.LBB3:
+  62:Core/Src/StateMachine.c **** 		osDelay(10U);
+ 113              		.loc 1 62 3 view .LVU17
+ 114 001e 4FF0FF33 		mov	r3, #-1
+ 115 0022 0022     		movs	r2, #0
+ 116 0024 1121     		movs	r1, #17
+ARM GAS  C:\Users\IAHERN~1\AppData\Local\Temp\cc9U3NYg.s 			page 5
+
+
+ 117 0026 0D48     		ldr	r0, .L9+12
+ 118 0028 0068     		ldr	r0, [r0]
+ 119 002a FFF7FEFF 		bl	osEventFlagsWait
+ 120              	.LVL6:
+  63:Core/Src/StateMachine.c **** 		Event event=0;
+ 121              		.loc 1 63 3 view .LVU18
+ 122 002e 0A20     		movs	r0, #10
+ 123 0030 FFF7FEFF 		bl	osDelay
+ 124              	.LVL7:
+  64:Core/Src/StateMachine.c **** 		osDelay(10U);
+ 125              		.loc 1 64 3 view .LVU19
+  65:Core/Src/StateMachine.c **** 
+ 126              		.loc 1 65 3 view .LVU20
+ 127 0034 0A20     		movs	r0, #10
+ 128 0036 FFF7FEFF 		bl	osDelay
+ 129              	.LVL8:
+  68:Core/Src/StateMachine.c **** 		{
+ 130              		.loc 1 68 3 view .LVU21
+ 131 003a 094B     		ldr	r3, .L9+16
+ 132 003c 1B68     		ldr	r3, [r3]
+ 133 003e 102B     		cmp	r3, #16
+ 134 0040 E0D0     		beq	.L6
+ 135 0042 B3F5807F 		cmp	r3, #256
+ 136 0046 01D1     		bne	.L7
+  77:Core/Src/StateMachine.c **** 				break;
+ 137              		.loc 1 77 11 is_stmt 0 view .LVU22
+ 138 0048 0220     		movs	r0, #2
+ 139 004a DCE7     		b	.L4
+ 140              	.L7:
+  68:Core/Src/StateMachine.c **** 		{
+ 141              		.loc 1 68 3 view .LVU23
+ 142 004c 0020     		movs	r0, #0
+ 143 004e DAE7     		b	.L4
+ 144              	.L10:
+ 145              		.align	2
+ 146              	.L9:
+ 147 0050 00000000 		.word	currentState
+ 148 0054 00000000 		.word	nextState
+ 149 0058 00000000 		.word	stateActions
+ 150 005c 00000000 		.word	flagsId
+ 151 0060 00000000 		.word	eventFlags
+ 152              	.LBE3:
+ 153              		.cfi_endproc
+ 154              	.LFE135:
+ 156              		.section	.rodata.handleSM_SLEEP.str1.4,"aMS",%progbits,1
+ 157              		.align	2
+ 158              	.LC0:
+ 159 0000 534C4545 		.ascii	"SLEEP STATE \011\000"
+ 159      50205354 
+ 159      41544520 
+ 159      0900
+ 160              		.section	.text.handleSM_SLEEP,"ax",%progbits
+ 161              		.align	1
+ 162              		.global	handleSM_SLEEP
+ 163              		.syntax unified
+ 164              		.thumb
+ 165              		.thumb_func
+ARM GAS  C:\Users\IAHERN~1\AppData\Local\Temp\cc9U3NYg.s 			page 6
+
+
+ 167              	handleSM_SLEEP:
+ 168              	.LFB138:
+ 104:Core/Src/StateMachine.c **** 
+ 105:Core/Src/StateMachine.c **** void handleSM_SLEEP(void) {
+ 169              		.loc 1 105 27 is_stmt 1 view -0
+ 170              		.cfi_startproc
+ 171              		@ args = 0, pretend = 0, frame = 16
+ 172              		@ frame_needed = 0, uses_anonymous_args = 0
+ 173 0000 00B5     		push	{lr}
+ 174              		.cfi_def_cfa_offset 4
+ 175              		.cfi_offset 14, -4
+ 176 0002 85B0     		sub	sp, sp, #20
+ 177              		.cfi_def_cfa_offset 24
+ 106:Core/Src/StateMachine.c ****     // Perform actions specific to the sleep state
+ 107:Core/Src/StateMachine.c **** 	uint8_t mssg3[] = "SLEEP STATE \t";
+ 178              		.loc 1 107 2 view .LVU25
+ 179              		.loc 1 107 10 is_stmt 0 view .LVU26
+ 180 0004 084B     		ldr	r3, .L13
+ 181 0006 EC46     		mov	ip, sp
+ 182 0008 0FCB     		ldm	r3, {r0, r1, r2, r3}
+ 183 000a ACE80700 		stmia	ip!, {r0, r1, r2}
+ 184 000e ACF80030 		strh	r3, [ip]	@ movhi
+ 108:Core/Src/StateMachine.c **** 	HAL_UART_Transmit(SM_uart_Port, mssg3, sizeof(mssg3), HAL_MAX_DELAY);
+ 185              		.loc 1 108 2 is_stmt 1 view .LVU27
+ 186 0012 4FF0FF33 		mov	r3, #-1
+ 187 0016 0E22     		movs	r2, #14
+ 188 0018 6946     		mov	r1, sp
+ 189 001a 0448     		ldr	r0, .L13+4
+ 190 001c 0068     		ldr	r0, [r0]
+ 191 001e FFF7FEFF 		bl	HAL_UART_Transmit
+ 192              	.LVL9:
+ 109:Core/Src/StateMachine.c **** }
+ 193              		.loc 1 109 1 is_stmt 0 view .LVU28
+ 194 0022 05B0     		add	sp, sp, #20
+ 195              		.cfi_def_cfa_offset 4
+ 196              		@ sp needed
+ 197 0024 5DF804FB 		ldr	pc, [sp], #4
+ 198              	.L14:
+ 199              		.align	2
+ 200              	.L13:
+ 201 0028 00000000 		.word	.LC0
+ 202 002c 00000000 		.word	SM_uart_Port
+ 203              		.cfi_endproc
+ 204              	.LFE138:
+ 206              		.section	.text.SM_Init,"ax",%progbits
+ 207              		.align	1
+ 208              		.global	SM_Init
+ 209              		.syntax unified
+ 210              		.thumb
+ 211              		.thumb_func
+ 213              	SM_Init:
+ 214              	.LVL10:
+ 215              	.LFB134:
+  39:Core/Src/StateMachine.c **** 
+ 216              		.loc 1 39 1 is_stmt 1 view -0
+ 217              		.cfi_startproc
+ 218              		@ args = 0, pretend = 0, frame = 0
+ARM GAS  C:\Users\IAHERN~1\AppData\Local\Temp\cc9U3NYg.s 			page 7
+
+
+ 219              		@ frame_needed = 0, uses_anonymous_args = 0
+  39:Core/Src/StateMachine.c **** 
+ 220              		.loc 1 39 1 is_stmt 0 view .LVU30
+ 221 0000 08B5     		push	{r3, lr}
+ 222              		.cfi_def_cfa_offset 8
+ 223              		.cfi_offset 3, -8
+ 224              		.cfi_offset 14, -4
+  41:Core/Src/StateMachine.c **** 	currentState = SM_NORMAL;
+ 225              		.loc 1 41 2 is_stmt 1 view .LVU31
+  41:Core/Src/StateMachine.c **** 	currentState = SM_NORMAL;
+ 226              		.loc 1 41 15 is_stmt 0 view .LVU32
+ 227 0002 094B     		ldr	r3, .L21
+ 228 0004 1860     		str	r0, [r3]
+  42:Core/Src/StateMachine.c **** 
+ 229              		.loc 1 42 2 is_stmt 1 view .LVU33
+  42:Core/Src/StateMachine.c **** 
+ 230              		.loc 1 42 15 is_stmt 0 view .LVU34
+ 231 0006 0021     		movs	r1, #0
+ 232 0008 084B     		ldr	r3, .L21+4
+ 233 000a 1970     		strb	r1, [r3]
+  44:Core/Src/StateMachine.c **** 	{
+ 234              		.loc 1 44 2 is_stmt 1 view .LVU35
+  44:Core/Src/StateMachine.c **** 	{
+ 235              		.loc 1 44 5 is_stmt 0 view .LVU36
+ 236 000c 0A46     		mov	r2, r1
+ 237 000e 0848     		ldr	r0, .L21+8
+ 238              	.LVL11:
+  44:Core/Src/StateMachine.c **** 	{
+ 239              		.loc 1 44 5 view .LVU37
+ 240 0010 FFF7FEFF 		bl	osThreadNew
+ 241              	.LVL12:
+  44:Core/Src/StateMachine.c **** 	{
+ 242              		.loc 1 44 4 discriminator 1 view .LVU38
+ 243 0014 30B1     		cbz	r0, .L17
+  50:Core/Src/StateMachine.c **** 	if(flagsId == NULL)
+ 244              		.loc 1 50 2 is_stmt 1 view .LVU39
+  50:Core/Src/StateMachine.c **** 	if(flagsId == NULL)
+ 245              		.loc 1 50 12 is_stmt 0 view .LVU40
+ 246 0016 0020     		movs	r0, #0
+ 247 0018 FFF7FEFF 		bl	osEventFlagsNew
+ 248              	.LVL13:
+  50:Core/Src/StateMachine.c **** 	if(flagsId == NULL)
+ 249              		.loc 1 50 10 discriminator 1 view .LVU41
+ 250 001c 054B     		ldr	r3, .L21+12
+ 251 001e 1860     		str	r0, [r3]
+  51:Core/Src/StateMachine.c **** 	{
+ 252              		.loc 1 51 2 is_stmt 1 view .LVU42
+  51:Core/Src/StateMachine.c **** 	{
+ 253              		.loc 1 51 4 is_stmt 0 view .LVU43
+ 254 0020 08B1     		cbz	r0, .L19
+  56:Core/Src/StateMachine.c **** 
+ 255              		.loc 1 56 1 view .LVU44
+ 256 0022 08BD     		pop	{r3, pc}
+ 257              	.L17:
+  46:Core/Src/StateMachine.c **** 	}
+ 258              		.loc 1 46 3 is_stmt 1 view .LVU45
+  46:Core/Src/StateMachine.c **** 	}
+ARM GAS  C:\Users\IAHERN~1\AppData\Local\Temp\cc9U3NYg.s 			page 8
+
+
+ 259              		.loc 1 46 8 view .LVU46
+ 260 0024 FEE7     		b	.L17
+ 261              	.L19:
+  53:Core/Src/StateMachine.c **** 	}
+ 262              		.loc 1 53 3 view .LVU47
+  53:Core/Src/StateMachine.c **** 	}
+ 263              		.loc 1 53 8 view .LVU48
+ 264 0026 FEE7     		b	.L19
+ 265              	.L22:
+ 266              		.align	2
+ 267              	.L21:
+ 268 0028 00000000 		.word	SM_uart_Port
+ 269 002c 00000000 		.word	currentState
+ 270 0030 00000000 		.word	runStateMachine
+ 271 0034 00000000 		.word	flagsId
+ 272              		.cfi_endproc
+ 273              	.LFE134:
+ 275              		.global	stateActions
+ 276              		.section	.data.stateActions,"aw"
+ 277              		.align	2
+ 280              	stateActions:
+ 281 0000 00000000 		.word	handleSM_NORMAL
+ 282 0004 00000000 		.word	handleSM_IDLE
+ 283 0008 00000000 		.word	handleSM_SLEEP
+ 284              		.global	nextState
+ 285              		.section	.data.nextState,"aw"
+ 286              		.align	2
+ 289              	nextState:
+ 290 0000 00       		.byte	0
+ 291 0001 01       		.byte	1
+ 292 0002 00       		.space	1
+ 293 0003 00       		.byte	0
+ 294 0004 01       		.byte	1
+ 295 0005 02       		.byte	2
+ 296 0006 00       		.byte	0
+ 297 0007 0000     		.space	2
+ 298              		.global	flags
+ 299              		.section	.bss.flags,"aw",%nobits
+ 302              	flags:
+ 303 0000 00       		.space	1
+ 304              		.global	threadId
+ 305              		.section	.bss.threadId,"aw",%nobits
+ 306              		.align	2
+ 309              	threadId:
+ 310 0000 00000000 		.space	4
+ 311              		.global	flagsId
+ 312              		.section	.bss.flagsId,"aw",%nobits
+ 313              		.align	2
+ 316              	flagsId:
+ 317 0000 00000000 		.space	4
+ 318              		.global	currentState
+ 319              		.section	.bss.currentState,"aw",%nobits
+ 322              	currentState:
+ 323 0000 00       		.space	1
+ 324              		.global	SM_uart_Port
+ 325              		.section	.bss.SM_uart_Port,"aw",%nobits
+ 326              		.align	2
+ARM GAS  C:\Users\IAHERN~1\AppData\Local\Temp\cc9U3NYg.s 			page 9
+
+
+ 329              	SM_uart_Port:
+ 330 0000 00000000 		.space	4
+ 331              		.text
+ 332              	.Letext0:
+ 333              		.file 2 "C:/Users/iahernandez/AppData/Roaming/Code/User/globalStorage/bmd.stm32-for-vscode/@xpack-
+ 334              		.file 3 "C:/Users/iahernandez/AppData/Roaming/Code/User/globalStorage/bmd.stm32-for-vscode/@xpack-
+ 335              		.file 4 "Drivers/CMSIS/Device/ST/STM32F4xx/Include/stm32f446xx.h"
+ 336              		.file 5 "Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_def.h"
+ 337              		.file 6 "Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_dma.h"
+ 338              		.file 7 "Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_uart.h"
+ 339              		.file 8 "Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2/cmsis_os2.h"
+ 340              		.file 9 "Core/Inc/StateMachine.h"
+ 341              		.file 10 "Core/Inc/Keyboard.h"
+ARM GAS  C:\Users\IAHERN~1\AppData\Local\Temp\cc9U3NYg.s 			page 10
+
+
+DEFINED SYMBOLS
+                            *ABS*:00000000 StateMachine.c
+C:\Users\IAHERN~1\AppData\Local\Temp\cc9U3NYg.s:21     .text.handleSM_NORMAL:00000000 $t
+C:\Users\IAHERN~1\AppData\Local\Temp\cc9U3NYg.s:27     .text.handleSM_NORMAL:00000000 handleSM_NORMAL
+C:\Users\IAHERN~1\AppData\Local\Temp\cc9U3NYg.s:40     .text.handleSM_IDLE:00000000 $t
+C:\Users\IAHERN~1\AppData\Local\Temp\cc9U3NYg.s:46     .text.handleSM_IDLE:00000000 handleSM_IDLE
+C:\Users\IAHERN~1\AppData\Local\Temp\cc9U3NYg.s:59     .text.runStateMachine:00000000 $t
+C:\Users\IAHERN~1\AppData\Local\Temp\cc9U3NYg.s:65     .text.runStateMachine:00000000 runStateMachine
+C:\Users\IAHERN~1\AppData\Local\Temp\cc9U3NYg.s:147    .text.runStateMachine:00000050 $d
+C:\Users\IAHERN~1\AppData\Local\Temp\cc9U3NYg.s:322    .bss.currentState:00000000 currentState
+C:\Users\IAHERN~1\AppData\Local\Temp\cc9U3NYg.s:289    .data.nextState:00000000 nextState
+C:\Users\IAHERN~1\AppData\Local\Temp\cc9U3NYg.s:280    .data.stateActions:00000000 stateActions
+C:\Users\IAHERN~1\AppData\Local\Temp\cc9U3NYg.s:316    .bss.flagsId:00000000 flagsId
+C:\Users\IAHERN~1\AppData\Local\Temp\cc9U3NYg.s:157    .rodata.handleSM_SLEEP.str1.4:00000000 $d
+C:\Users\IAHERN~1\AppData\Local\Temp\cc9U3NYg.s:161    .text.handleSM_SLEEP:00000000 $t
+C:\Users\IAHERN~1\AppData\Local\Temp\cc9U3NYg.s:167    .text.handleSM_SLEEP:00000000 handleSM_SLEEP
+C:\Users\IAHERN~1\AppData\Local\Temp\cc9U3NYg.s:201    .text.handleSM_SLEEP:00000028 $d
+C:\Users\IAHERN~1\AppData\Local\Temp\cc9U3NYg.s:329    .bss.SM_uart_Port:00000000 SM_uart_Port
+C:\Users\IAHERN~1\AppData\Local\Temp\cc9U3NYg.s:207    .text.SM_Init:00000000 $t
+C:\Users\IAHERN~1\AppData\Local\Temp\cc9U3NYg.s:213    .text.SM_Init:00000000 SM_Init
+C:\Users\IAHERN~1\AppData\Local\Temp\cc9U3NYg.s:268    .text.SM_Init:00000028 $d
+C:\Users\IAHERN~1\AppData\Local\Temp\cc9U3NYg.s:277    .data.stateActions:00000000 $d
+C:\Users\IAHERN~1\AppData\Local\Temp\cc9U3NYg.s:286    .data.nextState:00000000 $d
+C:\Users\IAHERN~1\AppData\Local\Temp\cc9U3NYg.s:302    .bss.flags:00000000 flags
+C:\Users\IAHERN~1\AppData\Local\Temp\cc9U3NYg.s:303    .bss.flags:00000000 $d
+C:\Users\IAHERN~1\AppData\Local\Temp\cc9U3NYg.s:309    .bss.threadId:00000000 threadId
+C:\Users\IAHERN~1\AppData\Local\Temp\cc9U3NYg.s:306    .bss.threadId:00000000 $d
+C:\Users\IAHERN~1\AppData\Local\Temp\cc9U3NYg.s:313    .bss.flagsId:00000000 $d
+C:\Users\IAHERN~1\AppData\Local\Temp\cc9U3NYg.s:323    .bss.currentState:00000000 $d
+C:\Users\IAHERN~1\AppData\Local\Temp\cc9U3NYg.s:326    .bss.SM_uart_Port:00000000 $d
+
+UNDEFINED SYMBOLS
+osEventFlagsWait
+osDelay
+eventFlags
+HAL_UART_Transmit
+osThreadNew
+osEventFlagsNew

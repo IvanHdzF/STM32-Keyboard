@@ -1,0 +1,701 @@
+ARM GAS  C:\Users\IAHERN~1\AppData\Local\Temp\ccor0U4V.s 			page 1
+
+
+   1              		.cpu cortex-m4
+   2              		.arch armv7e-m
+   3              		.fpu fpv4-sp-d16
+   4              		.eabi_attribute 27, 1
+   5              		.eabi_attribute 28, 1
+   6              		.eabi_attribute 20, 1
+   7              		.eabi_attribute 21, 1
+   8              		.eabi_attribute 23, 3
+   9              		.eabi_attribute 24, 1
+  10              		.eabi_attribute 25, 1
+  11              		.eabi_attribute 26, 1
+  12              		.eabi_attribute 30, 1
+  13              		.eabi_attribute 34, 1
+  14              		.eabi_attribute 18, 4
+  15              		.file	"Keyboard.c"
+  16              		.text
+  17              	.Ltext0:
+  18              		.cfi_sections	.debug_frame
+  19              		.file 1 "Core/Src/Keyboard.c"
+  20              		.section	.text.keyboard_Init,"ax",%progbits
+  21              		.align	1
+  22              		.global	keyboard_Init
+  23              		.syntax unified
+  24              		.thumb
+  25              		.thumb_func
+  27              	keyboard_Init:
+  28              	.LVL0:
+  29              	.LFB141:
+   1:Core/Src/Keyboard.c **** /*
+   2:Core/Src/Keyboard.c ****  * Keyboard.c
+   3:Core/Src/Keyboard.c ****  *
+   4:Core/Src/Keyboard.c ****  *  Created on: Jan 23, 2024
+   5:Core/Src/Keyboard.c ****  *      Author: rjmendez
+   6:Core/Src/Keyboard.c ****  */
+   7:Core/Src/Keyboard.c **** 
+   8:Core/Src/Keyboard.c **** #include "main.h"
+   9:Core/Src/Keyboard.c **** #include "stdio.h"
+  10:Core/Src/Keyboard.c **** #include "cmsis_os2.h"
+  11:Core/Src/Keyboard.c **** #include "StateMachine.h"
+  12:Core/Src/Keyboard.c **** #include "kbd_process.h"
+  13:Core/Src/Keyboard.c **** 
+  14:Core/Src/Keyboard.c **** #include "FreeRTOS.h"
+  15:Core/Src/Keyboard.c **** #include "task.h"
+  16:Core/Src/Keyboard.c **** 
+  17:Core/Src/Keyboard.c **** // Buffer to store received data
+  18:Core/Src/Keyboard.c **** #define RX_BUFFER_SIZE 		100
+  19:Core/Src/Keyboard.c **** 
+  20:Core/Src/Keyboard.c **** // Message Queue creation variables
+  21:Core/Src/Keyboard.c **** #define MAX_NUM_MESSAGES 	100
+  22:Core/Src/Keyboard.c **** #define MAX_MESSAGE_SIZE	1		// This size is in bytes
+  23:Core/Src/Keyboard.c **** 
+  24:Core/Src/Keyboard.c **** #define MAX_IDLE_CYCLES 	400 	// 40 equals a second
+  25:Core/Src/Keyboard.c **** 
+  26:Core/Src/Keyboard.c **** UART_HandleTypeDef *uart_Port;
+  27:Core/Src/Keyboard.c **** 
+  28:Core/Src/Keyboard.c **** osMessageQueueId_t mssgQ;
+  29:Core/Src/Keyboard.c **** 
+ARM GAS  C:\Users\IAHERN~1\AppData\Local\Temp\ccor0U4V.s 			page 2
+
+
+  30:Core/Src/Keyboard.c **** osTimerId_t mssgQ_timer;
+  31:Core/Src/Keyboard.c **** 
+  32:Core/Src/Keyboard.c **** osStatus_t status;
+  33:Core/Src/Keyboard.c **** 
+  34:Core/Src/Keyboard.c **** extern osThreadId_t threadId;
+  35:Core/Src/Keyboard.c **** 
+  36:Core/Src/Keyboard.c **** static uint8_t mssgQ_buffer[RX_BUFFER_SIZE];
+  37:Core/Src/Keyboard.c **** static uint8_t rx_buffer[RX_BUFFER_SIZE];
+  38:Core/Src/Keyboard.c **** static uint32_t rx_index = 0;
+  39:Core/Src/Keyboard.c **** static uint32_t idleCycles = 0;
+  40:Core/Src/Keyboard.c **** 
+  41:Core/Src/Keyboard.c **** uint32_t eventFlags = 0;
+  42:Core/Src/Keyboard.c **** 
+  43:Core/Src/Keyboard.c **** 
+  44:Core/Src/Keyboard.c **** void gotoSleep();
+  45:Core/Src/Keyboard.c **** void messageQ_TimerCallback();
+  46:Core/Src/Keyboard.c **** 
+  47:Core/Src/Keyboard.c **** void keyboard_Init(UART_HandleTypeDef *huart)
+  48:Core/Src/Keyboard.c **** {
+  30              		.loc 1 48 1 view -0
+  31              		.cfi_startproc
+  32              		@ args = 0, pretend = 0, frame = 0
+  33              		@ frame_needed = 0, uses_anonymous_args = 0
+  34              		.loc 1 48 1 is_stmt 0 view .LVU1
+  35 0000 10B5     		push	{r4, lr}
+  36              		.cfi_def_cfa_offset 8
+  37              		.cfi_offset 4, -8
+  38              		.cfi_offset 14, -4
+  39 0002 0446     		mov	r4, r0
+  49:Core/Src/Keyboard.c **** 	uart_Port = huart;
+  40              		.loc 1 49 2 is_stmt 1 view .LVU2
+  41              		.loc 1 49 12 is_stmt 0 view .LVU3
+  42 0004 104B     		ldr	r3, .L11
+  43 0006 1860     		str	r0, [r3]
+  50:Core/Src/Keyboard.c **** 
+  51:Core/Src/Keyboard.c **** 	mssgQ = osMessageQueueNew(MAX_NUM_MESSAGES, MAX_MESSAGE_SIZE, NULL);
+  44              		.loc 1 51 2 is_stmt 1 view .LVU4
+  45              		.loc 1 51 10 is_stmt 0 view .LVU5
+  46 0008 0022     		movs	r2, #0
+  47 000a 0121     		movs	r1, #1
+  48 000c 6420     		movs	r0, #100
+  49              	.LVL1:
+  50              		.loc 1 51 10 view .LVU6
+  51 000e FFF7FEFF 		bl	osMessageQueueNew
+  52              	.LVL2:
+  53              		.loc 1 51 8 discriminator 1 view .LVU7
+  54 0012 0E4B     		ldr	r3, .L11+4
+  55 0014 1860     		str	r0, [r3]
+  52:Core/Src/Keyboard.c **** 	// In case MessageQueue fails
+  53:Core/Src/Keyboard.c **** 	if(mssgQ == NULL) {
+  56              		.loc 1 53 2 is_stmt 1 view .LVU8
+  57              		.loc 1 53 4 is_stmt 0 view .LVU9
+  58 0016 68B1     		cbz	r0, .L3
+  54:Core/Src/Keyboard.c **** 		while(1);
+  55:Core/Src/Keyboard.c **** 	}
+  56:Core/Src/Keyboard.c **** 
+  57:Core/Src/Keyboard.c **** 	mssgQ_timer = osTimerNew(messageQ_TimerCallback, osTimerPeriodic, NULL, NULL);
+ARM GAS  C:\Users\IAHERN~1\AppData\Local\Temp\ccor0U4V.s 			page 3
+
+
+  59              		.loc 1 57 2 is_stmt 1 view .LVU10
+  60              		.loc 1 57 16 is_stmt 0 view .LVU11
+  61 0018 0023     		movs	r3, #0
+  62 001a 1A46     		mov	r2, r3
+  63 001c 0121     		movs	r1, #1
+  64 001e 0C48     		ldr	r0, .L11+8
+  65 0020 FFF7FEFF 		bl	osTimerNew
+  66              	.LVL3:
+  67              		.loc 1 57 14 discriminator 1 view .LVU12
+  68 0024 0B4B     		ldr	r3, .L11+12
+  69 0026 1860     		str	r0, [r3]
+  58:Core/Src/Keyboard.c **** 	// In case timer for MessageQueue fails
+  59:Core/Src/Keyboard.c **** 	if(mssgQ_timer == NULL) {
+  70              		.loc 1 59 2 is_stmt 1 view .LVU13
+  71              		.loc 1 59 4 is_stmt 0 view .LVU14
+  72 0028 28B1     		cbz	r0, .L5
+  60:Core/Src/Keyboard.c **** 		while(1);
+  61:Core/Src/Keyboard.c **** 	}
+  62:Core/Src/Keyboard.c **** 	if(osTimerStart(mssgQ_timer, 25U) != osOK)
+  73              		.loc 1 62 2 is_stmt 1 view .LVU15
+  74              		.loc 1 62 5 is_stmt 0 view .LVU16
+  75 002a 1921     		movs	r1, #25
+  76 002c FFF7FEFF 		bl	osTimerStart
+  77              	.LVL4:
+  78              		.loc 1 62 4 discriminator 1 view .LVU17
+  79 0030 10B1     		cbz	r0, .L6
+  80              	.L7:
+  63:Core/Src/Keyboard.c **** 	{
+  64:Core/Src/Keyboard.c **** 		while(1);
+  81              		.loc 1 64 3 is_stmt 1 view .LVU18
+  82              		.loc 1 64 8 view .LVU19
+  83 0032 FEE7     		b	.L7
+  84              	.L3:
+  54:Core/Src/Keyboard.c **** 	}
+  85              		.loc 1 54 3 view .LVU20
+  54:Core/Src/Keyboard.c **** 	}
+  86              		.loc 1 54 8 view .LVU21
+  87 0034 FEE7     		b	.L3
+  88              	.L5:
+  60:Core/Src/Keyboard.c **** 		while(1);
+  89              		.loc 1 60 3 view .LVU22
+  60:Core/Src/Keyboard.c **** 		while(1);
+  90              		.loc 1 60 8 view .LVU23
+  91 0036 FEE7     		b	.L5
+  92              	.L6:
+  65:Core/Src/Keyboard.c **** 	}
+  66:Core/Src/Keyboard.c **** 
+  67:Core/Src/Keyboard.c **** 	if (HAL_UART_Receive_IT(huart, rx_buffer, 1) != HAL_OK) {
+  93              		.loc 1 67 2 view .LVU24
+  94              		.loc 1 67 6 is_stmt 0 view .LVU25
+  95 0038 0122     		movs	r2, #1
+  96 003a 0749     		ldr	r1, .L11+16
+  97 003c 2046     		mov	r0, r4
+  98 003e FFF7FEFF 		bl	HAL_UART_Receive_IT
+  99              	.LVL5:
+ 100              		.loc 1 67 5 discriminator 1 view .LVU26
+ 101 0042 00B1     		cbz	r0, .L1
+ARM GAS  C:\Users\IAHERN~1\AppData\Local\Temp\ccor0U4V.s 			page 4
+
+
+ 102              	.L9:
+  68:Core/Src/Keyboard.c **** 		while(1){}
+ 103              		.loc 1 68 3 is_stmt 1 view .LVU27
+ 104              		.loc 1 68 12 view .LVU28
+ 105              		.loc 1 68 8 view .LVU29
+ 106 0044 FEE7     		b	.L9
+ 107              	.L1:
+  69:Core/Src/Keyboard.c **** 	}
+  70:Core/Src/Keyboard.c **** }
+ 108              		.loc 1 70 1 is_stmt 0 view .LVU30
+ 109 0046 10BD     		pop	{r4, pc}
+ 110              	.LVL6:
+ 111              	.L12:
+ 112              		.loc 1 70 1 view .LVU31
+ 113              		.align	2
+ 114              	.L11:
+ 115 0048 00000000 		.word	uart_Port
+ 116 004c 00000000 		.word	mssgQ
+ 117 0050 00000000 		.word	messageQ_TimerCallback
+ 118 0054 00000000 		.word	mssgQ_timer
+ 119 0058 00000000 		.word	rx_buffer
+ 120              		.cfi_endproc
+ 121              	.LFE141:
+ 123              		.section	.text.HAL_UART_RxCpltCallback,"ax",%progbits
+ 124              		.align	1
+ 125              		.global	HAL_UART_RxCpltCallback
+ 126              		.syntax unified
+ 127              		.thumb
+ 128              		.thumb_func
+ 130              	HAL_UART_RxCpltCallback:
+ 131              	.LVL7:
+ 132              	.LFB142:
+  71:Core/Src/Keyboard.c **** 
+  72:Core/Src/Keyboard.c **** 
+  73:Core/Src/Keyboard.c **** void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+  74:Core/Src/Keyboard.c **** {
+ 133              		.loc 1 74 1 is_stmt 1 view -0
+ 134              		.cfi_startproc
+ 135              		@ args = 0, pretend = 0, frame = 0
+ 136              		@ frame_needed = 0, uses_anonymous_args = 0
+  75:Core/Src/Keyboard.c **** 	if(huart->Instance == uart_Port->Instance)
+ 137              		.loc 1 75 2 view .LVU33
+ 138              		.loc 1 75 10 is_stmt 0 view .LVU34
+ 139 0000 0268     		ldr	r2, [r0]
+ 140              		.loc 1 75 33 view .LVU35
+ 141 0002 0F4B     		ldr	r3, .L20
+ 142 0004 1B68     		ldr	r3, [r3]
+ 143 0006 1B68     		ldr	r3, [r3]
+ 144              		.loc 1 75 4 view .LVU36
+ 145 0008 9A42     		cmp	r2, r3
+ 146 000a 00D0     		beq	.L19
+ 147 000c 7047     		bx	lr
+ 148              	.L19:
+  74:Core/Src/Keyboard.c **** 	if(huart->Instance == uart_Port->Instance)
+ 149              		.loc 1 74 1 view .LVU37
+ 150 000e 10B5     		push	{r4, lr}
+ 151              		.cfi_def_cfa_offset 8
+ARM GAS  C:\Users\IAHERN~1\AppData\Local\Temp\ccor0U4V.s 			page 5
+
+
+ 152              		.cfi_offset 4, -8
+ 153              		.cfi_offset 14, -4
+  76:Core/Src/Keyboard.c **** 	{
+  77:Core/Src/Keyboard.c **** 		// Send data to queue
+  78:Core/Src/Keyboard.c **** 		status = osMessageQueuePut(mssgQ, &rx_buffer[rx_index], 0, 0);
+ 154              		.loc 1 78 3 is_stmt 1 view .LVU38
+ 155              		.loc 1 78 12 is_stmt 0 view .LVU39
+ 156 0010 0C4C     		ldr	r4, .L20+4
+ 157 0012 0023     		movs	r3, #0
+ 158 0014 1A46     		mov	r2, r3
+ 159 0016 2146     		mov	r1, r4
+ 160 0018 0B48     		ldr	r0, .L20+8
+ 161              	.LVL8:
+ 162              		.loc 1 78 12 view .LVU40
+ 163 001a 0068     		ldr	r0, [r0]
+ 164 001c FFF7FEFF 		bl	osMessageQueuePut
+ 165              	.LVL9:
+ 166              		.loc 1 78 10 discriminator 1 view .LVU41
+ 167 0020 0A4B     		ldr	r3, .L20+12
+ 168 0022 1860     		str	r0, [r3]
+  79:Core/Src/Keyboard.c **** 
+  80:Core/Src/Keyboard.c **** 		// Set flags for event
+  81:Core/Src/Keyboard.c **** 		eventFlags = osEventFlagsSet(flagsId, 0x00000001U);
+ 169              		.loc 1 81 3 is_stmt 1 view .LVU42
+ 170              		.loc 1 81 16 is_stmt 0 view .LVU43
+ 171 0024 0121     		movs	r1, #1
+ 172 0026 0A4B     		ldr	r3, .L20+16
+ 173 0028 1868     		ldr	r0, [r3]
+ 174 002a FFF7FEFF 		bl	osEventFlagsSet
+ 175              	.LVL10:
+ 176              		.loc 1 81 14 discriminator 1 view .LVU44
+ 177 002e 094B     		ldr	r3, .L20+20
+ 178 0030 1860     		str	r0, [r3]
+  82:Core/Src/Keyboard.c **** 		//osDelay(2U);
+  83:Core/Src/Keyboard.c **** 
+  84:Core/Src/Keyboard.c **** 		// Start a new reception
+  85:Core/Src/Keyboard.c **** 		HAL_UART_Receive_IT(uart_Port, &rx_buffer[rx_index], 1);
+ 179              		.loc 1 85 3 is_stmt 1 view .LVU45
+ 180 0032 0122     		movs	r2, #1
+ 181 0034 2146     		mov	r1, r4
+ 182 0036 024B     		ldr	r3, .L20
+ 183 0038 1868     		ldr	r0, [r3]
+ 184 003a FFF7FEFF 		bl	HAL_UART_Receive_IT
+ 185              	.LVL11:
+  86:Core/Src/Keyboard.c **** 	}
+  87:Core/Src/Keyboard.c **** }
+ 186              		.loc 1 87 1 is_stmt 0 view .LVU46
+ 187 003e 10BD     		pop	{r4, pc}
+ 188              	.L21:
+ 189              		.align	2
+ 190              	.L20:
+ 191 0040 00000000 		.word	uart_Port
+ 192 0044 00000000 		.word	rx_buffer
+ 193 0048 00000000 		.word	mssgQ
+ 194 004c 00000000 		.word	status
+ 195 0050 00000000 		.word	flagsId
+ 196 0054 00000000 		.word	eventFlags
+ARM GAS  C:\Users\IAHERN~1\AppData\Local\Temp\ccor0U4V.s 			page 6
+
+
+ 197              		.cfi_endproc
+ 198              	.LFE142:
+ 200              		.section	.rodata.gotoSleep.str1.4,"aMS",%progbits,1
+ 201              		.align	2
+ 202              	.LC0:
+ 203 0000 746F6920 		.ascii	"toi mimido\000"
+ 203      6D696D69 
+ 203      646F00
+ 204              		.section	.text.gotoSleep,"ax",%progbits
+ 205              		.align	1
+ 206              		.global	gotoSleep
+ 207              		.syntax unified
+ 208              		.thumb
+ 209              		.thumb_func
+ 211              	gotoSleep:
+ 212              	.LFB144:
+  88:Core/Src/Keyboard.c **** 
+  89:Core/Src/Keyboard.c **** void messageQ_TimerCallback()
+  90:Core/Src/Keyboard.c **** {
+  91:Core/Src/Keyboard.c **** 	uint32_t messagesCount = 0;
+  92:Core/Src/Keyboard.c **** 	messagesCount = osMessageQueueGetCount(mssgQ);
+  93:Core/Src/Keyboard.c **** 	// Check if queue has data saved inside
+  94:Core/Src/Keyboard.c **** 	if( messagesCount > 0 )
+  95:Core/Src/Keyboard.c **** 	{
+  96:Core/Src/Keyboard.c **** 		for(int i = 0; i < messagesCount; i++)
+  97:Core/Src/Keyboard.c **** 		{
+  98:Core/Src/Keyboard.c **** 			osMessageQueueGet(mssgQ, &mssgQ_buffer[i], 0, 0);
+  99:Core/Src/Keyboard.c **** 			//HAL_UART_Transmit(uart_Port, mssgQ_buffer, 1, HAL_MAX_DELAY);
+ 100:Core/Src/Keyboard.c **** 			
+ 101:Core/Src/Keyboard.c **** 		}
+ 102:Core/Src/Keyboard.c **** 		taskENTER_CRITICAL();
+ 103:Core/Src/Keyboard.c **** 		processInputData(mssgQ_buffer, 1);
+ 104:Core/Src/Keyboard.c **** 		uint8_t data[] = {0x10};
+ 105:Core/Src/Keyboard.c ****         processInputData(data, sizeof(data));
+ 106:Core/Src/Keyboard.c **** 		taskEXIT_CRITICAL();
+ 107:Core/Src/Keyboard.c **** 
+ 108:Core/Src/Keyboard.c **** 		// Reset cycles to activate sleep mode
+ 109:Core/Src/Keyboard.c **** 		idleCycles = 0;
+ 110:Core/Src/Keyboard.c **** 	}
+ 111:Core/Src/Keyboard.c **** 	else
+ 112:Core/Src/Keyboard.c **** 	{
+ 113:Core/Src/Keyboard.c **** 		// Set flag for event IDLE
+ 114:Core/Src/Keyboard.c **** 		eventFlags = osEventFlagsSet(flagsId, 0x00000010U);
+ 115:Core/Src/Keyboard.c **** 		idleCycles++;
+ 116:Core/Src/Keyboard.c **** 	}
+ 117:Core/Src/Keyboard.c **** 
+ 118:Core/Src/Keyboard.c **** 	if(idleCycles == MAX_IDLE_CYCLES)
+ 119:Core/Src/Keyboard.c **** 	{
+ 120:Core/Src/Keyboard.c **** 		gotoSleep();
+ 121:Core/Src/Keyboard.c **** 	}
+ 122:Core/Src/Keyboard.c **** }
+ 123:Core/Src/Keyboard.c **** 
+ 124:Core/Src/Keyboard.c **** void gotoSleep()
+ 125:Core/Src/Keyboard.c **** {
+ 213              		.loc 1 125 1 is_stmt 1 view -0
+ 214              		.cfi_startproc
+ 215              		@ args = 0, pretend = 0, frame = 16
+ARM GAS  C:\Users\IAHERN~1\AppData\Local\Temp\ccor0U4V.s 			page 7
+
+
+ 216              		@ frame_needed = 0, uses_anonymous_args = 0
+ 217 0000 00B5     		push	{lr}
+ 218              		.cfi_def_cfa_offset 4
+ 219              		.cfi_offset 14, -4
+ 220 0002 85B0     		sub	sp, sp, #20
+ 221              		.cfi_def_cfa_offset 24
+ 126:Core/Src/Keyboard.c **** 	uint8_t sleepMssg[] = "toi mimido";
+ 222              		.loc 1 126 2 view .LVU48
+ 223              		.loc 1 126 10 is_stmt 0 view .LVU49
+ 224 0004 0D4A     		ldr	r2, .L24
+ 225 0006 01AB     		add	r3, sp, #4
+ 226 0008 07CA     		ldm	r2, {r0, r1, r2}
+ 227 000a 03C3     		stmia	r3!, {r0, r1}
+ 228 000c 23F8022B 		strh	r2, [r3], #2	@ movhi
+ 229 0010 120C     		lsrs	r2, r2, #16
+ 230 0012 1A70     		strb	r2, [r3]
+ 127:Core/Src/Keyboard.c **** 	HAL_UART_Transmit(uart_Port, sleepMssg, sizeof(sleepMssg), HAL_MAX_DELAY);
+ 231              		.loc 1 127 2 is_stmt 1 view .LVU50
+ 232 0014 4FF0FF33 		mov	r3, #-1
+ 233 0018 0B22     		movs	r2, #11
+ 234 001a 01A9     		add	r1, sp, #4
+ 235 001c 0848     		ldr	r0, .L24+4
+ 236 001e 0068     		ldr	r0, [r0]
+ 237 0020 FFF7FEFF 		bl	HAL_UART_Transmit
+ 238              	.LVL12:
+ 128:Core/Src/Keyboard.c **** 	// Set flag for event SLEEP
+ 129:Core/Src/Keyboard.c **** 
+ 130:Core/Src/Keyboard.c **** 	eventFlags = osEventFlagsSet(flagsId, 0x00000100U);
+ 239              		.loc 1 130 2 view .LVU51
+ 240              		.loc 1 130 15 is_stmt 0 view .LVU52
+ 241 0024 4FF48071 		mov	r1, #256
+ 242 0028 064B     		ldr	r3, .L24+8
+ 243 002a 1868     		ldr	r0, [r3]
+ 244 002c FFF7FEFF 		bl	osEventFlagsSet
+ 245              	.LVL13:
+ 246              		.loc 1 130 13 discriminator 1 view .LVU53
+ 247 0030 054B     		ldr	r3, .L24+12
+ 248 0032 1860     		str	r0, [r3]
+ 131:Core/Src/Keyboard.c **** }
+ 249              		.loc 1 131 1 view .LVU54
+ 250 0034 05B0     		add	sp, sp, #20
+ 251              		.cfi_def_cfa_offset 4
+ 252              		@ sp needed
+ 253 0036 5DF804FB 		ldr	pc, [sp], #4
+ 254              	.L25:
+ 255 003a 00BF     		.align	2
+ 256              	.L24:
+ 257 003c 00000000 		.word	.LC0
+ 258 0040 00000000 		.word	uart_Port
+ 259 0044 00000000 		.word	flagsId
+ 260 0048 00000000 		.word	eventFlags
+ 261              		.cfi_endproc
+ 262              	.LFE144:
+ 264              		.section	.text.messageQ_TimerCallback,"ax",%progbits
+ 265              		.align	1
+ 266              		.global	messageQ_TimerCallback
+ 267              		.syntax unified
+ARM GAS  C:\Users\IAHERN~1\AppData\Local\Temp\ccor0U4V.s 			page 8
+
+
+ 268              		.thumb
+ 269              		.thumb_func
+ 271              	messageQ_TimerCallback:
+ 272              	.LFB143:
+  90:Core/Src/Keyboard.c **** 	uint32_t messagesCount = 0;
+ 273              		.loc 1 90 1 is_stmt 1 view -0
+ 274              		.cfi_startproc
+ 275              		@ args = 0, pretend = 0, frame = 8
+ 276              		@ frame_needed = 0, uses_anonymous_args = 0
+ 277 0000 30B5     		push	{r4, r5, lr}
+ 278              		.cfi_def_cfa_offset 12
+ 279              		.cfi_offset 4, -12
+ 280              		.cfi_offset 5, -8
+ 281              		.cfi_offset 14, -4
+ 282 0002 83B0     		sub	sp, sp, #12
+ 283              		.cfi_def_cfa_offset 24
+  91:Core/Src/Keyboard.c **** 	messagesCount = osMessageQueueGetCount(mssgQ);
+ 284              		.loc 1 91 2 view .LVU56
+ 285              	.LVL14:
+  92:Core/Src/Keyboard.c **** 	// Check if queue has data saved inside
+ 286              		.loc 1 92 2 view .LVU57
+  92:Core/Src/Keyboard.c **** 	// Check if queue has data saved inside
+ 287              		.loc 1 92 18 is_stmt 0 view .LVU58
+ 288 0004 1D4B     		ldr	r3, .L37
+ 289 0006 1868     		ldr	r0, [r3]
+ 290 0008 FFF7FEFF 		bl	osMessageQueueGetCount
+ 291              	.LVL15:
+  94:Core/Src/Keyboard.c **** 	{
+ 292              		.loc 1 94 2 is_stmt 1 view .LVU59
+  94:Core/Src/Keyboard.c **** 	{
+ 293              		.loc 1 94 4 is_stmt 0 view .LVU60
+ 294 000c 30B3     		cbz	r0, .L35
+ 295 000e 0546     		mov	r5, r0
+ 296              	.LBB2:
+ 297              	.LBB3:
+  96:Core/Src/Keyboard.c **** 		{
+ 298              		.loc 1 96 11 view .LVU61
+ 299 0010 0024     		movs	r4, #0
+ 300 0012 08E0     		b	.L27
+ 301              	.LVL16:
+ 302              	.L29:
+  98:Core/Src/Keyboard.c **** 			//HAL_UART_Transmit(uart_Port, mssgQ_buffer, 1, HAL_MAX_DELAY);
+ 303              		.loc 1 98 4 is_stmt 1 view .LVU62
+ 304 0014 0023     		movs	r3, #0
+ 305 0016 1A46     		mov	r2, r3
+ 306 0018 1949     		ldr	r1, .L37+4
+ 307 001a 2144     		add	r1, r1, r4
+ 308 001c 1748     		ldr	r0, .L37
+ 309 001e 0068     		ldr	r0, [r0]
+ 310 0020 FFF7FEFF 		bl	osMessageQueueGet
+ 311              	.LVL17:
+  96:Core/Src/Keyboard.c **** 		{
+ 312              		.loc 1 96 38 discriminator 3 view .LVU63
+ 313 0024 0134     		adds	r4, r4, #1
+ 314              	.LVL18:
+ 315              	.L27:
+  96:Core/Src/Keyboard.c **** 		{
+ARM GAS  C:\Users\IAHERN~1\AppData\Local\Temp\ccor0U4V.s 			page 9
+
+
+ 316              		.loc 1 96 20 discriminator 1 view .LVU64
+ 317 0026 AC42     		cmp	r4, r5
+ 318 0028 F4D3     		bcc	.L29
+ 319              	.LBE3:
+ 102:Core/Src/Keyboard.c **** 		processInputData(mssgQ_buffer, 1);
+ 320              		.loc 1 102 3 view .LVU65
+ 321 002a FFF7FEFF 		bl	vPortEnterCritical
+ 322              	.LVL19:
+ 103:Core/Src/Keyboard.c **** 		uint8_t data[] = {0x10};
+ 323              		.loc 1 103 3 view .LVU66
+ 324 002e 0121     		movs	r1, #1
+ 325 0030 1348     		ldr	r0, .L37+4
+ 326 0032 FFF7FEFF 		bl	processInputData
+ 327              	.LVL20:
+ 104:Core/Src/Keyboard.c ****         processInputData(data, sizeof(data));
+ 328              		.loc 1 104 3 view .LVU67
+ 104:Core/Src/Keyboard.c ****         processInputData(data, sizeof(data));
+ 329              		.loc 1 104 11 is_stmt 0 view .LVU68
+ 330 0036 1023     		movs	r3, #16
+ 331 0038 8DF80430 		strb	r3, [sp, #4]
+ 105:Core/Src/Keyboard.c **** 		taskEXIT_CRITICAL();
+ 332              		.loc 1 105 9 is_stmt 1 view .LVU69
+ 333 003c 0121     		movs	r1, #1
+ 334 003e 01A8     		add	r0, sp, #4
+ 335 0040 FFF7FEFF 		bl	processInputData
+ 336              	.LVL21:
+ 106:Core/Src/Keyboard.c **** 
+ 337              		.loc 1 106 3 view .LVU70
+ 338 0044 FFF7FEFF 		bl	vPortExitCritical
+ 339              	.LVL22:
+ 109:Core/Src/Keyboard.c **** 	}
+ 340              		.loc 1 109 3 view .LVU71
+ 109:Core/Src/Keyboard.c **** 	}
+ 341              		.loc 1 109 14 is_stmt 0 view .LVU72
+ 342 0048 0E4B     		ldr	r3, .L37+8
+ 343 004a 0022     		movs	r2, #0
+ 344 004c 1A60     		str	r2, [r3]
+ 345              	.LVL23:
+ 346              	.L30:
+ 109:Core/Src/Keyboard.c **** 	}
+ 347              		.loc 1 109 14 view .LVU73
+ 348              	.LBE2:
+ 118:Core/Src/Keyboard.c **** 	{
+ 349              		.loc 1 118 2 is_stmt 1 view .LVU74
+ 118:Core/Src/Keyboard.c **** 	{
+ 350              		.loc 1 118 16 is_stmt 0 view .LVU75
+ 351 004e 0D4B     		ldr	r3, .L37+8
+ 352 0050 1B68     		ldr	r3, [r3]
+ 118:Core/Src/Keyboard.c **** 	{
+ 353              		.loc 1 118 4 view .LVU76
+ 354 0052 B3F5C87F 		cmp	r3, #400
+ 355 0056 0DD0     		beq	.L36
+ 356              	.L26:
+ 122:Core/Src/Keyboard.c **** 
+ 357              		.loc 1 122 1 view .LVU77
+ 358 0058 03B0     		add	sp, sp, #12
+ 359              		.cfi_remember_state
+ARM GAS  C:\Users\IAHERN~1\AppData\Local\Temp\ccor0U4V.s 			page 10
+
+
+ 360              		.cfi_def_cfa_offset 12
+ 361              		@ sp needed
+ 362 005a 30BD     		pop	{r4, r5, pc}
+ 363              	.LVL24:
+ 364              	.L35:
+ 365              		.cfi_restore_state
+ 114:Core/Src/Keyboard.c **** 		idleCycles++;
+ 366              		.loc 1 114 3 is_stmt 1 view .LVU78
+ 114:Core/Src/Keyboard.c **** 		idleCycles++;
+ 367              		.loc 1 114 16 is_stmt 0 view .LVU79
+ 368 005c 1021     		movs	r1, #16
+ 369 005e 0A4B     		ldr	r3, .L37+12
+ 370 0060 1868     		ldr	r0, [r3]
+ 371              	.LVL25:
+ 114:Core/Src/Keyboard.c **** 		idleCycles++;
+ 372              		.loc 1 114 16 view .LVU80
+ 373 0062 FFF7FEFF 		bl	osEventFlagsSet
+ 374              	.LVL26:
+ 114:Core/Src/Keyboard.c **** 		idleCycles++;
+ 375              		.loc 1 114 14 discriminator 1 view .LVU81
+ 376 0066 094B     		ldr	r3, .L37+16
+ 377 0068 1860     		str	r0, [r3]
+ 115:Core/Src/Keyboard.c **** 	}
+ 378              		.loc 1 115 3 is_stmt 1 view .LVU82
+ 115:Core/Src/Keyboard.c **** 	}
+ 379              		.loc 1 115 13 is_stmt 0 view .LVU83
+ 380 006a 064A     		ldr	r2, .L37+8
+ 381 006c 1368     		ldr	r3, [r2]
+ 382 006e 0133     		adds	r3, r3, #1
+ 383 0070 1360     		str	r3, [r2]
+ 384 0072 ECE7     		b	.L30
+ 385              	.L36:
+ 120:Core/Src/Keyboard.c **** 	}
+ 386              		.loc 1 120 3 is_stmt 1 view .LVU84
+ 387 0074 FFF7FEFF 		bl	gotoSleep
+ 388              	.LVL27:
+ 122:Core/Src/Keyboard.c **** 
+ 389              		.loc 1 122 1 is_stmt 0 view .LVU85
+ 390 0078 EEE7     		b	.L26
+ 391              	.L38:
+ 392 007a 00BF     		.align	2
+ 393              	.L37:
+ 394 007c 00000000 		.word	mssgQ
+ 395 0080 00000000 		.word	mssgQ_buffer
+ 396 0084 00000000 		.word	idleCycles
+ 397 0088 00000000 		.word	flagsId
+ 398 008c 00000000 		.word	eventFlags
+ 399              		.cfi_endproc
+ 400              	.LFE143:
+ 402              		.global	eventFlags
+ 403              		.section	.bss.eventFlags,"aw",%nobits
+ 404              		.align	2
+ 407              	eventFlags:
+ 408 0000 00000000 		.space	4
+ 409              		.section	.bss.idleCycles,"aw",%nobits
+ 410              		.align	2
+ 413              	idleCycles:
+ARM GAS  C:\Users\IAHERN~1\AppData\Local\Temp\ccor0U4V.s 			page 11
+
+
+ 414 0000 00000000 		.space	4
+ 415              		.section	.bss.rx_buffer,"aw",%nobits
+ 416              		.align	2
+ 419              	rx_buffer:
+ 420 0000 00000000 		.space	100
+ 420      00000000 
+ 420      00000000 
+ 420      00000000 
+ 420      00000000 
+ 421              		.section	.bss.mssgQ_buffer,"aw",%nobits
+ 422              		.align	2
+ 425              	mssgQ_buffer:
+ 426 0000 00000000 		.space	100
+ 426      00000000 
+ 426      00000000 
+ 426      00000000 
+ 426      00000000 
+ 427              		.global	status
+ 428              		.section	.bss.status,"aw",%nobits
+ 429              		.align	2
+ 432              	status:
+ 433 0000 00000000 		.space	4
+ 434              		.global	mssgQ_timer
+ 435              		.section	.bss.mssgQ_timer,"aw",%nobits
+ 436              		.align	2
+ 439              	mssgQ_timer:
+ 440 0000 00000000 		.space	4
+ 441              		.global	mssgQ
+ 442              		.section	.bss.mssgQ,"aw",%nobits
+ 443              		.align	2
+ 446              	mssgQ:
+ 447 0000 00000000 		.space	4
+ 448              		.global	uart_Port
+ 449              		.section	.bss.uart_Port,"aw",%nobits
+ 450              		.align	2
+ 453              	uart_Port:
+ 454 0000 00000000 		.space	4
+ 455              		.text
+ 456              	.Letext0:
+ 457              		.file 2 "C:/Users/iahernandez/AppData/Roaming/Code/User/globalStorage/bmd.stm32-for-vscode/@xpack-
+ 458              		.file 3 "C:/Users/iahernandez/AppData/Roaming/Code/User/globalStorage/bmd.stm32-for-vscode/@xpack-
+ 459              		.file 4 "Drivers/CMSIS/Device/ST/STM32F4xx/Include/stm32f446xx.h"
+ 460              		.file 5 "Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_def.h"
+ 461              		.file 6 "Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_dma.h"
+ 462              		.file 7 "Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_uart.h"
+ 463              		.file 8 "Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2/cmsis_os2.h"
+ 464              		.file 9 "Core/Inc/StateMachine.h"
+ 465              		.file 10 "Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h"
+ 466              		.file 11 "Core/Inc/kbd_process.h"
+ARM GAS  C:\Users\IAHERN~1\AppData\Local\Temp\ccor0U4V.s 			page 12
+
+
+DEFINED SYMBOLS
+                            *ABS*:00000000 Keyboard.c
+C:\Users\IAHERN~1\AppData\Local\Temp\ccor0U4V.s:21     .text.keyboard_Init:00000000 $t
+C:\Users\IAHERN~1\AppData\Local\Temp\ccor0U4V.s:27     .text.keyboard_Init:00000000 keyboard_Init
+C:\Users\IAHERN~1\AppData\Local\Temp\ccor0U4V.s:115    .text.keyboard_Init:00000048 $d
+C:\Users\IAHERN~1\AppData\Local\Temp\ccor0U4V.s:453    .bss.uart_Port:00000000 uart_Port
+C:\Users\IAHERN~1\AppData\Local\Temp\ccor0U4V.s:446    .bss.mssgQ:00000000 mssgQ
+C:\Users\IAHERN~1\AppData\Local\Temp\ccor0U4V.s:271    .text.messageQ_TimerCallback:00000000 messageQ_TimerCallback
+C:\Users\IAHERN~1\AppData\Local\Temp\ccor0U4V.s:439    .bss.mssgQ_timer:00000000 mssgQ_timer
+C:\Users\IAHERN~1\AppData\Local\Temp\ccor0U4V.s:419    .bss.rx_buffer:00000000 rx_buffer
+C:\Users\IAHERN~1\AppData\Local\Temp\ccor0U4V.s:124    .text.HAL_UART_RxCpltCallback:00000000 $t
+C:\Users\IAHERN~1\AppData\Local\Temp\ccor0U4V.s:130    .text.HAL_UART_RxCpltCallback:00000000 HAL_UART_RxCpltCallback
+C:\Users\IAHERN~1\AppData\Local\Temp\ccor0U4V.s:191    .text.HAL_UART_RxCpltCallback:00000040 $d
+C:\Users\IAHERN~1\AppData\Local\Temp\ccor0U4V.s:432    .bss.status:00000000 status
+C:\Users\IAHERN~1\AppData\Local\Temp\ccor0U4V.s:407    .bss.eventFlags:00000000 eventFlags
+C:\Users\IAHERN~1\AppData\Local\Temp\ccor0U4V.s:201    .rodata.gotoSleep.str1.4:00000000 $d
+C:\Users\IAHERN~1\AppData\Local\Temp\ccor0U4V.s:205    .text.gotoSleep:00000000 $t
+C:\Users\IAHERN~1\AppData\Local\Temp\ccor0U4V.s:211    .text.gotoSleep:00000000 gotoSleep
+C:\Users\IAHERN~1\AppData\Local\Temp\ccor0U4V.s:257    .text.gotoSleep:0000003c $d
+C:\Users\IAHERN~1\AppData\Local\Temp\ccor0U4V.s:265    .text.messageQ_TimerCallback:00000000 $t
+C:\Users\IAHERN~1\AppData\Local\Temp\ccor0U4V.s:394    .text.messageQ_TimerCallback:0000007c $d
+C:\Users\IAHERN~1\AppData\Local\Temp\ccor0U4V.s:425    .bss.mssgQ_buffer:00000000 mssgQ_buffer
+C:\Users\IAHERN~1\AppData\Local\Temp\ccor0U4V.s:413    .bss.idleCycles:00000000 idleCycles
+C:\Users\IAHERN~1\AppData\Local\Temp\ccor0U4V.s:404    .bss.eventFlags:00000000 $d
+C:\Users\IAHERN~1\AppData\Local\Temp\ccor0U4V.s:410    .bss.idleCycles:00000000 $d
+C:\Users\IAHERN~1\AppData\Local\Temp\ccor0U4V.s:416    .bss.rx_buffer:00000000 $d
+C:\Users\IAHERN~1\AppData\Local\Temp\ccor0U4V.s:422    .bss.mssgQ_buffer:00000000 $d
+C:\Users\IAHERN~1\AppData\Local\Temp\ccor0U4V.s:429    .bss.status:00000000 $d
+C:\Users\IAHERN~1\AppData\Local\Temp\ccor0U4V.s:436    .bss.mssgQ_timer:00000000 $d
+C:\Users\IAHERN~1\AppData\Local\Temp\ccor0U4V.s:443    .bss.mssgQ:00000000 $d
+C:\Users\IAHERN~1\AppData\Local\Temp\ccor0U4V.s:450    .bss.uart_Port:00000000 $d
+
+UNDEFINED SYMBOLS
+osMessageQueueNew
+osTimerNew
+osTimerStart
+HAL_UART_Receive_IT
+osMessageQueuePut
+osEventFlagsSet
+flagsId
+HAL_UART_Transmit
+osMessageQueueGetCount
+osMessageQueueGet
+vPortEnterCritical
+processInputData
+vPortExitCritical

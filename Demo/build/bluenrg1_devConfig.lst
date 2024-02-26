@@ -1,0 +1,49 @@
+ARM GAS  C:\Users\IAHERN~1\AppData\Local\Temp\ccDiYggj.s 			page 1
+
+
+   1              		.cpu cortex-m4
+   2              		.arch armv7e-m
+   3              		.fpu fpv4-sp-d16
+   4              		.eabi_attribute 27, 1
+   5              		.eabi_attribute 28, 1
+   6              		.eabi_attribute 20, 1
+   7              		.eabi_attribute 21, 1
+   8              		.eabi_attribute 23, 3
+   9              		.eabi_attribute 24, 1
+  10              		.eabi_attribute 25, 1
+  11              		.eabi_attribute 26, 1
+  12              		.eabi_attribute 30, 1
+  13              		.eabi_attribute 34, 1
+  14              		.eabi_attribute 18, 4
+  15              		.file	"bluenrg1_devConfig.c"
+  16              		.text
+  17              	.Ltext0:
+  18              		.cfi_sections	.debug_frame
+  19              		.file 1 "Middlewares/ST/BlueNRG-2/hci/bluenrg1_devConfig.c"
+  20              		.global	deviceConfig
+  21              		.section	.rodata.deviceConfig,"a"
+  22              		.align	2
+  25              	deviceConfig:
+  26 0000 FF       		.byte	-1
+  27 0001 00       		.byte	0
+  28 0002 FF       		.byte	-1
+  29 0003 FF       		.byte	-1
+  30 0004 4801     		.short	328
+  31 0006 FA00     		.short	250
+  32 0008 06       		.byte	6
+  33 0009 05001900 		.4byte	1638405
+  34 000d FF       		.byte	-1
+  35              		.text
+  36              	.Letext0:
+  37              		.file 2 "C:/Users/iahernandez/AppData/Roaming/Code/User/globalStorage/bmd.stm32-for-vscode/@xpack-
+  38              		.file 3 "C:/Users/iahernandez/AppData/Roaming/Code/User/globalStorage/bmd.stm32-for-vscode/@xpack-
+  39              		.file 4 "Middlewares/ST/BlueNRG-2/includes/bluenrg_utils.h"
+ARM GAS  C:\Users\IAHERN~1\AppData\Local\Temp\ccDiYggj.s 			page 2
+
+
+DEFINED SYMBOLS
+                            *ABS*:00000000 bluenrg1_devConfig.c
+C:\Users\IAHERN~1\AppData\Local\Temp\ccDiYggj.s:25     .rodata.deviceConfig:00000000 deviceConfig
+C:\Users\IAHERN~1\AppData\Local\Temp\ccDiYggj.s:22     .rodata.deviceConfig:00000000 $d
+
+NO UNDEFINED SYMBOLS

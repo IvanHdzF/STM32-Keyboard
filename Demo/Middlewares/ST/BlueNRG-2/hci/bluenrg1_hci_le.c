@@ -19,6 +19,7 @@
   */
 #include "ble_types.h"
 #include "bluenrg1_hci_le.h"
+#include "stdio.h"
 tBleStatus hci_disconnect(uint16_t Connection_Handle,
                           uint8_t Reason)
 {
@@ -855,6 +856,7 @@ tBleStatus hci_le_start_encryption(uint16_t Connection_Handle,
                                    uint16_t Encrypted_Diversifier,
                                    uint8_t Long_Term_Key[16])
 {
+  printf("AQUIIIIIIIIIIIIIIII");
   struct hci_request rq;
   uint8_t cmd_buffer[258];
   hci_le_start_encryption_cp0 *cp0 = (hci_le_start_encryption_cp0*)(cmd_buffer);
