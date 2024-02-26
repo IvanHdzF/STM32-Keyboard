@@ -42,6 +42,6 @@ uint8_t hidDevice_Init(uint8_t IO_Capability, connParam_Type connParam,uint8_t d
   * @retval Status of the call.
   */
 
-uint8_t hidSetDeviceSecurty(uint8_t MITM_Mode, uint8_t fixedPinUsed, uint32_t fixedPinValue);
+uint8_t hidSetDeviceSecurity(uint8_t MITM_Mode, uint8_t fixedPinUsed, uint32_t fixedPinValue);
 
 #endif /* INC_INIT_H_ */
