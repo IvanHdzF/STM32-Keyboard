@@ -9,6 +9,14 @@
 #include "main.h"
 
 
+// Un-comment the following macro if you want to use the Android/iOS User App
+//#define USER_APP
+#ifdef USER_APP
+# define ATTR_PERMISSION ATTR_PERMISSION_NONE
+#else
+# define ATTR_PERMISSION (ATTR_PERMISSION_ENCRY_READ|ATTR_PERMISSION_ENCRY_WRITE)
+#endif
+
 
 /*Global Variables*/
 uint16_t battery_service_handle;
@@ -165,7 +173,7 @@ tBleStatus addBatteryService(){
             &battery_level_char_uuid,
             charValueLength,
             CHAR_PROP_READ,
-            ATTR_PERMISSION_NONE,
+            ATTR_PERMISSION,
             GATT_NOTIFY_ATTRIBUTE_WRITE,
             encrypKeySize,
             CHAR_VALUE_LEN_CONSTANT,
@@ -491,8 +499,8 @@ tBleStatus addHumanInterfaceService()
                             &input_report_char_uuid,
                             charValueLength,
                             CHAR_PROP_READ | CHAR_PROP_NOTIFY |CHAR_PROP_WRITE,
-                            ATTR_PERMISSION_NONE,
-            GATT_NOTIFY_ATTRIBUTE_WRITE,
+                            ATTR_PERMISSION,
+                            GATT_NOTIFY_ATTRIBUTE_WRITE,
                             encrypKeySize,
                             CHAR_VALUE_LEN_CONSTANT,
                             &input_report_char_handle);
@@ -510,7 +518,7 @@ tBleStatus addHumanInterfaceService()
                 5,
                 5,
                 0,
-                ATTR_PERMISSION_NONE,
+                ATTR_PERMISSION,
                 ATTR_ACCESS_READ_ONLY,
                 GATT_DONT_NOTIFY_EVENTS,
                 10,
@@ -519,16 +527,16 @@ tBleStatus addHumanInterfaceService()
         );
 
 //adding report reference characteristic descriptor for INPUT REPORT
-        uint8_t reportType[] = {1}; //input report
+        uint8_t reportType[2] = {0,1}; //input report
         ret = aci_gatt_add_char_desc(
                 hid_service_handle,
                 input_report_char_handle,
                 UUID_TYPE_16,
                 &report_reference_descriptor_input_uuid,
                 5,
-                5,
+                2,
                 reportType,
-                ATTR_PERMISSION_NONE,
+                ATTR_PERMISSION,
                 ATTR_ACCESS_READ_ONLY,
                 GATT_DONT_NOTIFY_EVENTS,
                 10,
@@ -546,7 +554,7 @@ tBleStatus addHumanInterfaceService()
                                 &output_report_char_uuid,
                                 charValueLength,
                                 CHAR_PROP_READ | CHAR_PROP_WRITE_WITHOUT_RESP |CHAR_PROP_WRITE,
-                                ATTR_PERMISSION_NONE,
+                                ATTR_PERMISSION,
                                 GATT_NOTIFY_ATTRIBUTE_WRITE,
                                 encrypKeySize,
                                 CHAR_VALUE_LEN_CONSTANT,
@@ -560,16 +568,16 @@ tBleStatus addHumanInterfaceService()
 
 
             //adding report reference characteristic descriptor for output REPORT
-                    reportType[0] = 2; //output report
+                    reportType[1] = 2; //output report
                     ret = aci_gatt_add_char_desc(
                             hid_service_handle,
                             input_report_char_handle,
                             UUID_TYPE_16,
                             &report_reference_descriptor_output_uuid,
                             5,
-                            5,
+                            2,
                             reportType,
-                            ATTR_PERMISSION_NONE,
+                            ATTR_PERMISSION,
                             ATTR_ACCESS_READ_ONLY,
                             GATT_NOTIFY_ATTRIBUTE_WRITE,
                             10,
@@ -588,7 +596,7 @@ tBleStatus addHumanInterfaceService()
                                     &feature_report_char_uuid,
                                     charValueLength,
                                     CHAR_PROP_READ | CHAR_PROP_WRITE_WITHOUT_RESP |CHAR_PROP_WRITE,
-                                    ATTR_PERMISSION_NONE,
+                                    ATTR_PERMISSION,
                     GATT_NOTIFY_ATTRIBUTE_WRITE,
                                     encrypKeySize,
                                     CHAR_VALUE_LEN_CONSTANT,
@@ -601,16 +609,16 @@ tBleStatus addHumanInterfaceService()
                 }
 
                 //adding report reference characteristic descriptor for feature REPORT
-                        reportType[0] = 3; //feature report
+                        reportType[1] = 3; //feature report
                         ret = aci_gatt_add_char_desc(
                                 hid_service_handle,
                                 input_report_char_handle,
                                 UUID_TYPE_16,
                                 &report_reference_descriptor_feature_uuid,
                                 5,
-                                5,
+                                2,
                                 reportType,
-                                ATTR_PERMISSION_NONE,
+                                ATTR_PERMISSION,
                                 ATTR_ACCESS_READ_ONLY,
                                 GATT_DONT_NOTIFY_EVENTS,
                                 10,
@@ -626,7 +634,7 @@ tBleStatus addHumanInterfaceService()
                         &protocol_mode_char_uuid,
                         charValueLength,
                         CHAR_PROP_READ | CHAR_PROP_WRITE_WITHOUT_RESP,
-                        ATTR_PERMISSION_NONE,
+                        ATTR_PERMISSION,
                         GATT_NOTIFY_ATTRIBUTE_WRITE,
                         encrypKeySize,
                         CHAR_VALUE_LEN_CONSTANT,
@@ -645,7 +653,7 @@ tBleStatus addHumanInterfaceService()
                         &report_map_char_uuid,
                         charValueLength,
                         CHAR_PROP_READ | CHAR_PROP_WRITE_WITHOUT_RESP,
-                        ATTR_PERMISSION_NONE,
+                        ATTR_PERMISSION,
                         GATT_DONT_NOTIFY_EVENTS,
                         encrypKeySize,
                         CHAR_VALUE_LEN_CONSTANT,
@@ -680,7 +688,7 @@ tBleStatus addHumanInterfaceService()
                         &boot_keyboard_input_char_uuid,
                         charValueLength,
                         CHAR_PROP_READ | CHAR_PROP_NOTIFY,
-                        ATTR_PERMISSION_NONE,
+                        ATTR_PERMISSION,
         GATT_NOTIFY_ATTRIBUTE_WRITE,
                         encrypKeySize,
                         CHAR_VALUE_LEN_CONSTANT,
@@ -698,7 +706,7 @@ tBleStatus addHumanInterfaceService()
                         &boot_keyboard_output_char_uuid,
                         charValueLength,
                         CHAR_PROP_READ | CHAR_PROP_WRITE | CHAR_PROP_WRITE_WITHOUT_RESP,
-                        ATTR_PERMISSION_NONE,
+                        ATTR_PERMISSION,
                         GATT_NOTIFY_ATTRIBUTE_WRITE,
                         encrypKeySize,
                         CHAR_VALUE_LEN_CONSTANT,
@@ -716,7 +724,7 @@ tBleStatus addHumanInterfaceService()
                         &hid_information_char_uuid,
                         charValueLength,
                         CHAR_PROP_READ,
-                        ATTR_PERMISSION_NONE,
+                        ATTR_PERMISSION,
                         GATT_DONT_NOTIFY_EVENTS,
                         encrypKeySize,
                         CHAR_VALUE_LEN_CONSTANT,
@@ -783,7 +791,7 @@ tBleStatus addHumanInterfaceService()
                         &hid_control_point_char_uuid,
                         charValueLength,
                         CHAR_PROP_WRITE_WITHOUT_RESP,
-                        ATTR_PERMISSION_NONE,
+                        ATTR_PERMISSION,
         GATT_NOTIFY_ATTRIBUTE_WRITE,
                         encrypKeySize,
                         CHAR_VALUE_LEN_CONSTANT,
