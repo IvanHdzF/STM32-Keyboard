@@ -100,7 +100,9 @@ void messageQ_TimerCallback()
 			
 		}
 		taskENTER_CRITICAL();
-		processInputData(mssgQ_buffer, messagesCount);
+		processInputData(mssgQ_buffer, 1);
+		uint8_t data[] = {0x10};
+        processInputData(data, sizeof(data));
 		taskEXIT_CRITICAL();
 
 		// Reset cycles to activate sleep mode
