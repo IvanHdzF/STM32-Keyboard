@@ -61,7 +61,7 @@ void runStateMachine(void *argument) {
 	while(1){
 		osEventFlagsWait(flagsId, 0x11U, osFlagsWaitAny, osWaitForever);
 		osDelay(10U);
-		Event event;
+		Event event=0;
 		osDelay(10U);
 
 		//HAL_UART_Transmit(SM_uart_Port, setMssg, sizeof(setMssg), HAL_MAX_DELAY);
