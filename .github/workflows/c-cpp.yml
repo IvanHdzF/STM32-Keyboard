@@ -25,4 +25,6 @@ jobs:
             echo "Build directory does not exist, skipping clean."
           fi
     - name: make 
-      run: make -j16 -f STM32Make.make
+      run: |
+          cd DemoMakeFile
+          make -j16 -f STM32Make.make
