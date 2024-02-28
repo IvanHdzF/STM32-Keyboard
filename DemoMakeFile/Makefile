@@ -36,58 +36,59 @@ BUILD_DIR = build
 ######################################
 # C sources
 C_SOURCES =  \
-Core/Src/main.c \
-Core/Src/freertos.c \
-Core/Src/stm32f4xx_nucleo_bus.c \
-Core/Src/stm32f4xx_it.c \
-Core/Src/stm32f4xx_hal_msp.c \
-Core/Src/stm32f4xx_hal_timebase_tim.c \
-Core/Src/callbacks.c \
+BlueNRG-2/Target/hci_tl_interface.c \
 Core/Src/Init.c \
-Core/Src/services.c \
-Core/Src/kbd_process.c \
 Core/Src/Keyboard.c \
 Core/Src/StateMachine.c \
+Core/Src/callbacks.c \
+Core/Src/freertos.c \
+Core/Src/kbd_process.c \
+Core/Src/main.c \
+Core/Src/services.c \
 Core/Src/sm.c \
-BlueNRG-2/Target/hci_tl_interface.c \
-Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_spi.c \
-Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_rcc.c \
-Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_rcc_ex.c \
+Core/Src/stm32f4xx_hal_msp.c \
+Core/Src/stm32f4xx_hal_timebase_tim.c \
+Core/Src/stm32f4xx_it.c \
+Core/Src/stm32f4xx_nucleo_bus.c \
+Core/Src/syscalls.c \
+Core/Src/system_stm32f4xx.c \
+Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal.c \
+Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_cortex.c \
+Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_dma.c \
+Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_dma_ex.c \
+Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_exti.c \
 Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_flash.c \
 Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_flash_ex.c \
 Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_flash_ramfunc.c \
 Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_gpio.c \
-Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_dma_ex.c \
-Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_dma.c \
 Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_pwr.c \
 Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_pwr_ex.c \
-Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_cortex.c \
-Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal.c \
-Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_exti.c \
+Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_rcc.c \
+Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_rcc_ex.c \
+Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_spi.c \
 Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_tim.c \
 Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_tim_ex.c \
 Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_uart.c \
-Core/Src/system_stm32f4xx.c \
-Middlewares/Third_Party/FreeRTOS/Source/croutine.c \
-Middlewares/Third_Party/FreeRTOS/Source/event_groups.c \
-Middlewares/Third_Party/FreeRTOS/Source/list.c \
-Middlewares/Third_Party/FreeRTOS/Source/queue.c \
-Middlewares/Third_Party/FreeRTOS/Source/stream_buffer.c \
-Middlewares/Third_Party/FreeRTOS/Source/tasks.c \
-Middlewares/Third_Party/FreeRTOS/Source/timers.c \
-Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2/cmsis_os2.c \
-Middlewares/Third_Party/FreeRTOS/Source/portable/MemMang/heap_4.c \
-Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/port.c \
-Middlewares/ST/BlueNRG-2/hci/hci_tl_patterns/Basic/hci_tl.c \
 Middlewares/ST/BlueNRG-2/hci/bluenrg1_devConfig.c \
 Middlewares/ST/BlueNRG-2/hci/bluenrg1_events.c \
 Middlewares/ST/BlueNRG-2/hci/bluenrg1_events_cb.c \
 Middlewares/ST/BlueNRG-2/hci/bluenrg1_hci_le.c \
-Middlewares/ST/BlueNRG-2/utils/ble_list.c \
 Middlewares/ST/BlueNRG-2/hci/controller/bluenrg1_gap_aci.c \
 Middlewares/ST/BlueNRG-2/hci/controller/bluenrg1_gatt_aci.c \
 Middlewares/ST/BlueNRG-2/hci/controller/bluenrg1_hal_aci.c \
-Middlewares/ST/BlueNRG-2/hci/controller/bluenrg1_l2cap_aci.c  
+Middlewares/ST/BlueNRG-2/hci/controller/bluenrg1_l2cap_aci.c \
+Middlewares/ST/BlueNRG-2/hci/hci_tl_patterns/Basic/hci_tl.c \
+Middlewares/ST/BlueNRG-2/utils/ble_list.c \
+Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2/cmsis_os2.c \
+Middlewares/Third_Party/FreeRTOS/Source/croutine.c \
+Middlewares/Third_Party/FreeRTOS/Source/event_groups.c \
+Middlewares/Third_Party/FreeRTOS/Source/list.c \
+Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/port.c \
+Middlewares/Third_Party/FreeRTOS/Source/portable/MemMang/heap_4.c \
+Middlewares/Third_Party/FreeRTOS/Source/queue.c \
+Middlewares/Third_Party/FreeRTOS/Source/stream_buffer.c \
+Middlewares/Third_Party/FreeRTOS/Source/tasks.c \
+Middlewares/Third_Party/FreeRTOS/Source/timers.c
 
 # ASM sources
 ASM_SOURCES =  \
@@ -148,18 +149,18 @@ AS_INCLUDES =  \
 
 # C includes
 C_INCLUDES =  \
--ICore/Inc \
 -IBlueNRG-2/Target \
--IDrivers/STM32F4xx_HAL_Driver/Inc \
--IDrivers/STM32F4xx_HAL_Driver/Inc/Legacy \
--IMiddlewares/Third_Party/FreeRTOS/Source/include \
--IMiddlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2 \
--IMiddlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F \
+-ICore/Inc \
 -IDrivers/CMSIS/Device/ST/STM32F4xx/Include \
 -IDrivers/CMSIS/Include \
+-IDrivers/STM32F4xx_HAL_Driver/Inc \
+-IDrivers/STM32F4xx_HAL_Driver/Inc/Legacy \
 -IMiddlewares/ST/BlueNRG-2/hci/hci_tl_patterns/Basic \
+-IMiddlewares/ST/BlueNRG-2/includes \
 -IMiddlewares/ST/BlueNRG-2/utils \
--IMiddlewares/ST/BlueNRG-2/includes
+-IMiddlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2 \
+-IMiddlewares/Third_Party/FreeRTOS/Source/include \
+-IMiddlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F
 
 
 # compile gcc flags
@@ -168,7 +169,7 @@ ASFLAGS = $(MCU) $(AS_DEFS) $(AS_INCLUDES) $(OPT) -Wall -fdata-sections -ffuncti
 CFLAGS += $(MCU) $(C_DEFS) $(C_INCLUDES) $(OPT) -Wall -fdata-sections -ffunction-sections
 
 ifeq ($(DEBUG), 1)
-CFLAGS += -g -gdwarf-2
+CFLAGS += -g -gdwarf -ggdb
 endif
 
 
@@ -208,6 +209,7 @@ $(BUILD_DIR)/%.o: %.c Makefile | $(BUILD_DIR)
 
 $(BUILD_DIR)/%.o: %.s Makefile | $(BUILD_DIR)
 	$(AS) -c $(CFLAGS) $< -o $@
+
 $(BUILD_DIR)/%.o: %.S Makefile | $(BUILD_DIR)
 	$(AS) -c $(CFLAGS) $< -o $@
 
@@ -230,6 +232,18 @@ $(BUILD_DIR):
 clean:
 	-rm -fR $(BUILD_DIR)
   
+#######################################
+# flash
+#######################################
+flash: $(BUILD_DIR)/$(TARGET).elf
+	openocd -f ./openocd.cfg -c "program $(BUILD_DIR)/$(TARGET).elf verify reset exit"
+
+#######################################
+# erase
+#######################################
+erase: $(BUILD_DIR)/$(TARGET).elf
+	openocd -f ./openocd.cfg -c "init; reset halt; stm32f4x mass_erase 0; exit"
+
 #######################################
 # dependencies
 #######################################
