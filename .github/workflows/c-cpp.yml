@@ -15,8 +15,9 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - name: move-to-dir
-      run: cd DemoMakeFile && \
-           dir
+      run: |
+          cd DemoMakeFile
+          ls
     - name: make-clean
       run: make -j16 -f STM32Make.make clean
     - name: make 
