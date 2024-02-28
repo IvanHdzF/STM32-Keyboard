@@ -14,15 +14,15 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
-    - name: move-to-dir
-      run: |
-          cd DemoMakeFile
-          ls
     - name: make-clean
       run: |
-           ls
-           cd DemoMakeFile
-           ls
-           make -j16 -f STM32Make.make clean      
+          cd DemoMakeFile
+          # Check if the build directory exists
+          if [ -d build ]; then
+            echo "Build directory exists, cleaning..."
+            make -j16 -f STM32Make.make clean
+          else
+            echo "Build directory does not exist, skipping clean."
+          fi
     - name: make 
       run: make -j16 -f STM32Make.make
