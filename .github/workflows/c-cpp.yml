@@ -5,6 +5,7 @@ on:
     branches: [ "demo-with-RTOS" ]
   pull_request:
     branches: [ "demo-with-RTOS" ]
+  workflow_dispatch:  # Manually trigger this workflow
 
 jobs:
   build:
