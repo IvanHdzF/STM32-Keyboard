@@ -19,6 +19,10 @@ jobs:
           cd DemoMakeFile
           ls
     - name: make-clean
-      run: make -j16 -f STM32Make.make clean
+      run: |
+           ls
+           cd DemoMakeFile
+           ls
+           make -j16 -f STM32Make.make clean      
     - name: make 
       run: make -j16 -f STM32Make.make
