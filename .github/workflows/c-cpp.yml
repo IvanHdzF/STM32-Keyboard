@@ -20,7 +20,7 @@ jobs:
           # Check if the build directory exists
           if [ -d build ]; then
             echo "Build directory exists, cleaning..."
-            make -j16 -f STM32Make.make clean
+            make clean
           else
             echo "Build directory does not exist, skipping clean."
           fi
