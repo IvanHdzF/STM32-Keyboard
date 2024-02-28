@@ -15,13 +15,6 @@
 #include "stdio.h"
 #include "stdlib.h"
 
-
-
-
-
-
-
-
 /*Update types for update char value ext*/
 #define GATT_LOCAL_UPDATE (0x00)
 #define GATT_NOTIFICATION (0x01)
@@ -255,6 +248,7 @@ typedef struct connParamS {
    */
   uint16_t timeout_multiplier;
 } connParam_Type;
+
 
 
 

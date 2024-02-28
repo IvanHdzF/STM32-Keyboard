@@ -4,10 +4,11 @@
  *  Created on: Jan 25, 2024
  *      Author: rjmendez
  */
-#include "cmsis_os2.h"
-
 #ifndef APPLICATION_USER_INC_STATEMACHINE_H_
 #define APPLICATION_USER_INC_STATEMACHINE_H_
+
+#include "cmsis_os2.h"
+#include "stm32f4xx_hal.h"
 
 extern osEventFlagsId_t flagsId;
 

@@ -7,10 +7,10 @@
 
 #include "StateMachine.h"
 #include "cmsis_os2.h"
-#include "kbd_process.h"
+#include "Keyboard.h"
 #include "main.h"
 #include "stdio.h"
-
+#include "kbd_process.h"
 
 #include "FreeRTOS.h"
 #include "task.h"

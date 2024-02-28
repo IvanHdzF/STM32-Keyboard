@@ -7,6 +7,7 @@
 
 #ifndef APPLICATION_USER_INC_KEYBOARD_H_
 #define APPLICATION_USER_INC_KEYBOARD_H_
+#include "stm32f4xx_hal.h"
 
 void keyboard_Init(UART_HandleTypeDef *huart);
 

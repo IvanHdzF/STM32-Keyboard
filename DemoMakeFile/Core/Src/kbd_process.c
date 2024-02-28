@@ -4,6 +4,7 @@
  *  Created on: Jan 25, 2024
  *      Author: smoreno
  */
+#include <stdint.h>
 #include "kbd_process.h"
 #include "ble_status.h"
 #include "ble_types.h"

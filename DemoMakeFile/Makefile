@@ -44,6 +44,7 @@ Core/Src/stm32f4xx_hal_msp.c \
 Core/Src/stm32f4xx_hal_timebase_tim.c \
 Core/Src/callbacks.c \
 Core/Src/Init.c \
+Core/Src/services.c \
 Core/Src/kbd_process.c \
 Core/Src/Keyboard.c \
 Core/Src/StateMachine.c \

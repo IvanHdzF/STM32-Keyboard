@@ -8,6 +8,7 @@
 #ifndef INC_KEYBOARD_H_
 #define INC_KEYBOARD_H_
 
+#include <stdint.h>
 
 #define HID_DEVICE_READY_TO_NOTIFY (0x04)
 #define NUM_0      0x30
