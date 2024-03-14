@@ -1,0 +1,3 @@
+/home/iahernandez/STM32-Keyboard/DemoMakeFile/build/CMakeFiles/rebuild_cache.dir
+/home/iahernandez/STM32-Keyboard/DemoMakeFile/build/CMakeFiles/edit_cache.dir
+/home/iahernandez/STM32-Keyboard/DemoMakeFile/build/CMakeFiles/firmware.dir
