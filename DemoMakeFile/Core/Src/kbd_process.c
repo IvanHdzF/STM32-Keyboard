@@ -4,11 +4,11 @@
  *  Created on: Jan 25, 2024
  *      Author: smoreno
  */
-#include <stdint.h>
 #include "kbd_process.h"
 #include "ble_status.h"
 #include "ble_types.h"
 #include "services.h"
+#include <stdint.h>
 
 extern uint16_t hid_service_handle;
 extern uint16_t input_report_char_handle;
@@ -46,9 +46,9 @@ void processInputData(uint8_t *data_buffer, uint8_t Nb_bytes) {
       ret = hidSendReport(0, INPUT_REPORT, sizeof(keys), keys);
       if (ret != BLE_STATUS_SUCCESS)
         BLUENRG_PRINTF("Error during send the report %02x\n", ret);
-      keys[0] = 0;
+      keys[0]      = 0;
       keys[offset] = 0;
-      nmbTimes = 0;
+      nmbTimes     = 0;
       do {
         ret = hidSendReport(0, INPUT_REPORT, sizeof(keys), keys);
         nmbTimes++;
@@ -61,7 +61,7 @@ uint8_t hid_keyboard_map(uint8_t charac, uint8_t *upperCase) {
   printf("*");
   uint8_t hidValue, i;
 
-  hidValue = 0;
+  hidValue   = 0;
   *upperCase = FALSE;
 
   // Handles numbers (0-9)
@@ -75,7 +75,7 @@ uint8_t hid_keyboard_map(uint8_t charac, uint8_t *upperCase) {
 
   // Handles upper cases (A-Z, 0x41-0x5A)
   if ((charac >= CHAR_A) && (charac <= CHAR_Z)) {
-    hidValue = charac - 0x41 + 0x04;
+    hidValue   = charac - 0x41 + 0x04;
     *upperCase = TRUE;
   }
 
@@ -88,7 +88,7 @@ uint8_t hid_keyboard_map(uint8_t charac, uint8_t *upperCase) {
     for (i = 0; i < KEY_TABLE_LEN; i++) {
       if (lookupTable[i].key == charac) {
         *upperCase = lookupTable[i].hid[0];
-        hidValue = lookupTable[i].hid[1];
+        hidValue   = lookupTable[i].hid[1];
         printf("lookup i>%d charac>%d\r\n", i, charac);
         break;
       }

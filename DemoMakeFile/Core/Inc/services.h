@@ -7,57 +7,52 @@
 
 #ifndef INC_SERVICES_H_
 #define INC_SERVICES_H_
-#include "bluenrg_conf.h"
-#include "bluenrg1_types.h"
-#include "bluenrg1_gap.h"
 #include "bluenrg1_aci.h"
+#include "bluenrg1_gap.h"
 #include "bluenrg1_hci_le.h"
+#include "bluenrg1_types.h"
+#include "bluenrg_conf.h"
 #include "stdio.h"
 #include "stdlib.h"
 
 /*Update types for update char value ext*/
-#define GATT_LOCAL_UPDATE (0x00)
-#define GATT_NOTIFICATION (0x01)
-#define GATT_INDICATION (0x02)
-#define GATT_DISABLE_RETRANSMISSIONS  (0x04)
+#define GATT_LOCAL_UPDATE            (0x00)
+#define GATT_NOTIFICATION            (0x01)
+#define GATT_INDICATION              (0x02)
+#define GATT_DISABLE_RETRANSMISSIONS (0x04)
 
-
-
-
-
-#define NUM_0      0x30
-#define NUM_9      0x39
-#define CHAR_A     0x41
-#define CHAR_Z     0x5A
-#define CHAR_a     0x61
-#define CHAR_z     0x7A
-#define RETURN     0x0D
-//#define BACKSPACE  0x08
-#define TAB        0x09
-#define SPACE      0x20
-#define DEBUG 1
-#define APP_TIMER 1
-#define IDLE_CONNECTION_TIMEOUT (120*1000) // 2 min
-#define KEY_TABLE_LEN 33
-#define MANUFAC_NAME_LEN 9
-#define MODEL_NUMB_LEN 4
-#define FW_REV_LEN 4
-#define SW_REV_LEN 4
-#define PNP_ID_LEN 7
-#define REPORT_NUMBER 2
-#define EXTERNAL_REPORT_NUMBER 1
+#define NUM_0  0x30
+#define NUM_9  0x39
+#define CHAR_A 0x41
+#define CHAR_Z 0x5A
+#define CHAR_a 0x61
+#define CHAR_z 0x7A
+#define RETURN 0x0D
+// #define BACKSPACE  0x08
+#define TAB                     0x09
+#define SPACE                   0x20
+#define DEBUG                   1
+#define APP_TIMER               1
+#define IDLE_CONNECTION_TIMEOUT (120 * 1000) // 2 min
+#define KEY_TABLE_LEN           33
+#define MANUFAC_NAME_LEN        9
+#define MODEL_NUMB_LEN          4
+#define FW_REV_LEN              4
+#define SW_REV_LEN              4
+#define PNP_ID_LEN              7
+#define REPORT_NUMBER           2
+#define EXTERNAL_REPORT_NUMBER  1
 #define INCLUDED_SERVICE_NUMBER 1
-#define REPORT_ID 0x01
-#define INPUT_REPORT 0x01
-#define OUTPUT_REPORT 0x02
+#define REPORT_ID               0x01
+#define INPUT_REPORT            0x01
+#define OUTPUT_REPORT           0x02
 
 #define CLIENT_CHAR_DESCR_UUID (0x2902)
 
 /* UUIDs for battery service */
-#define BATTERY_SERVICE_SERVICE_UUID                        (0x180F)
-#define BATTERY_LEVEL_CHAR_UUID                             (0x2A19)
-#define CHAR_PRESENTATION_FORMAT_DESCRIPTOR_UUID            (0x2904)
-
+#define BATTERY_SERVICE_SERVICE_UUID             (0x180F)
+#define BATTERY_LEVEL_CHAR_UUID                  (0x2A19)
+#define CHAR_PRESENTATION_FORMAT_DESCRIPTOR_UUID (0x2904)
 
 /*
  * UUIDs for Device Information Service
@@ -73,24 +68,22 @@
 #define IEEE_CERTIFICATION_UUID         (0x2A2A)
 #define PNP_ID_UUID                     (0x2A50)
 
-
 /*
  *  UUIDs for HID Service
  *  */
-#define HUMAN_INTERFACE_DEVICE_SERVICE_UUID                 (0x1812)
-#define PROTOCOL_MODE_CHAR_UUID                             (0x2A4E)
-#define REPORT_CHAR_UUID                                    (0x2A4D)
-#define REPORT_MAP_CHAR_UUID                                (0x2A4B)
-#define BOOT_KEYBOARD_INPUT_REPORT_CHAR_UUID                (0x2A22)
-#define BOOT_KEYBOARD_OUTPUT_REPORT_CHAR_UUID               (0x2A32)
-#define BOOT_MOUSE_INPUT_REPORT_CHAR_UUID                   (0x2A33)
-#define HID_INFORMATION_CHAR_UUID                           (0x2A4A)
-#define HID_CONTROL_POINT_CHAR_UUID                         (0x2A4C)
-#define HID_CLIENT_CHARACTERISTIC_CON_DESCRIPTOR            (0x2902)
-#define HID_REPORT_REFERENCE_CHAR_DESCRIPTOR                (0x2908)
+#define HUMAN_INTERFACE_DEVICE_SERVICE_UUID      (0x1812)
+#define PROTOCOL_MODE_CHAR_UUID                  (0x2A4E)
+#define REPORT_CHAR_UUID                         (0x2A4D)
+#define REPORT_MAP_CHAR_UUID                     (0x2A4B)
+#define BOOT_KEYBOARD_INPUT_REPORT_CHAR_UUID     (0x2A22)
+#define BOOT_KEYBOARD_OUTPUT_REPORT_CHAR_UUID    (0x2A32)
+#define BOOT_MOUSE_INPUT_REPORT_CHAR_UUID        (0x2A33)
+#define HID_INFORMATION_CHAR_UUID                (0x2A4A)
+#define HID_CONTROL_POINT_CHAR_UUID              (0x2A4C)
+#define HID_CLIENT_CHARACTERISTIC_CON_DESCRIPTOR (0x2902)
+#define HID_REPORT_REFERENCE_CHAR_DESCRIPTOR     (0x2908)
 
-
-#define HID_EXTERNAL_REPORT_DESCRIPTOR 						(0x2907)
+#define HID_EXTERNAL_REPORT_DESCRIPTOR (0x2907)
 /**
  * @name HID/HOGP Device discoverable mode configuration constants
  *@{
@@ -108,8 +101,6 @@
 
 //@} \\END HID/HOGP Device discoverable mode configuration constants
 
-
-
 /**
  * This sample application uses a char value length greater than 20 bytes
  * (typically used).
@@ -119,11 +110,9 @@
  * - increase both the HCI_READ_PACKET_SIZE and HCI_MAX_PAYLOAD_SIZE to 256
  *   (file bluenrg_conf.h)
  * - increase the CSTACK in the IDE project options (0xC00 is enough)
-*/
-#define CHAR_VALUE_LENGTH 63
+ */
+#define CHAR_VALUE_LENGTH   63
 #define CLIENT_MAX_MTU_SIZE 158
-
-
 
 /**
  * @brief Included Service type definition
@@ -143,7 +132,6 @@ typedef struct includeSerS {
   uint16_t end_handle;
 } includeSer_Type;
 
-
 /**
  * @brief Report Type definition
  */
@@ -155,9 +143,6 @@ typedef struct reportS {
   /** Report Length */
   uint8_t length;
 } report_Type;
-
-
-
 
 /**
  * @brief Device Information Service Specification
@@ -174,8 +159,6 @@ typedef struct devInfServiceS {
   /** PNP ID */
   uint8_t pnpID[PNP_ID_LEN];
 } devInfService_Type;
-
-
 
 /**
  * @brief HID Service Specification
@@ -228,9 +211,9 @@ typedef struct hidServiceS {
 } hidService_Type;
 
 /**
- * @brief Connection parameter to request after the bonding and service discovery.
- * The HID Device requests to change to its preferred connection parameters which best
- * suit its use case
+ * @brief Connection parameter to request after the bonding and service
+ * discovery. The HID Device requests to change to its preferred connection
+ * parameters which best suit its use case
  */
 typedef struct connParamS {
   /** Minimum value for the connection event interval.
@@ -249,19 +232,14 @@ typedef struct connParamS {
   uint16_t timeout_multiplier;
 } connParam_Type;
 
-
-
-
-void APP_UserEvtRx(void *pData);
-void send_data(uint8_t *data_buffer, uint8_t no_byte);
+void       APP_UserEvtRx(void *pData);
+void       send_data(uint8_t *data_buffer, uint8_t no_byte);
 tBleStatus addBatteryService(void);
-tBleStatus addDeviceInformationService(devInfService_Type* devInf);
-void updateDIService(devInfService_Type* devInf);
+tBleStatus addDeviceInformationService(devInfService_Type *devInf);
+void       updateDIService(devInfService_Type *devInf);
 tBleStatus addHumanInterfaceService();
-void updateHIDServiceParams();
-void BLE_Profile_Add_Advertisment_Service_UUID(uint16_t servUUID);
-
-
+void       updateHIDServiceParams();
+void       BLE_Profile_Add_Advertisment_Service_UUID(uint16_t servUUID);
 
 /**
  * @name HOGP GATT Database Configuration Functions
@@ -278,62 +256,56 @@ void BLE_Profile_Add_Advertisment_Service_UUID(uint16_t servUUID);
  * See the typedef HID Service for more details.
  * @retval Status of the call
  */
-uint8_t hidAddServices(devInfService_Type* devInf);
-
-
+uint8_t hidAddServices(devInfService_Type *devInf);
 
 /** Documentation for C struct Advertising_Report_t */
 typedef struct Advertising_Report_t_s {
-	/** Type of advertising report event:
-  ADV_IND: Connectable undirected advertising',
-  ADV_DIRECT_IND: Connectable directed advertising,
-  ADV_SCAN_IND: Scannable undirected advertising,
-  ADV_NONCONN_IND: Non connectable undirected advertising,
-  SCAN_RSP: Scan response.
-	* Values:
-	- 0x00: ADV_IND
-	- 0x01: ADV_DIRECT_IND
-	- 0x02: ADV_SCAN_IND
-	- 0x03: ADV_NONCONN_IND
-	- 0x04: SCAN_RSP
-	*/
-	uint8_t Event_Type;
-	/** 0x00 Public Device Address
-  0x01 Random Device Address
-  0x02 Public Identity Address (Corresponds to Resolved Private Address)
-  0x03 Random (Static) Identity Address (Corresponds to Resolved Private Address)
-	* Values:
-	- 0x00: Public Device Address
-	- 0x01: Random Device Address
-	- 0x02: Public Identity Address
-	- 0x03: Random (Static) Identity Address
-	*/
-	uint8_t Address_Type;
-	/** Public Device Address, Random Device Address, Public Identity
-  Address or Random (static) Identity Address of the advertising
-  device.
-	*/
-	uint8_t Address[6];
-	/** Length of the Data[i] field for each device which responded.
-	* Values:
-	- 0 ... 31
-	*/
-	uint8_t Length_Data;
-	/** Length_Data[i] octets of advertising or scan response data formatted
-  as defined in [Vol 3] Part C, Section 8.
-	*/
-	uint8_t* Data;
-	/** N Size: 1 Octet (signed integer)
-  Units: dBm
-	* Values:
-	- 127: RSSI not available
-	- -127 ... 20
-	*/
-	uint8_t RSSI;
+  /** Type of advertising report event:
+ADV_IND: Connectable undirected advertising',
+ADV_DIRECT_IND: Connectable directed advertising,
+ADV_SCAN_IND: Scannable undirected advertising,
+ADV_NONCONN_IND: Non connectable undirected advertising,
+SCAN_RSP: Scan response.
+* Values:
+- 0x00: ADV_IND
+- 0x01: ADV_DIRECT_IND
+- 0x02: ADV_SCAN_IND
+- 0x03: ADV_NONCONN_IND
+- 0x04: SCAN_RSP
+*/
+  uint8_t Event_Type;
+  /** 0x00 Public Device Address
+0x01 Random Device Address
+0x02 Public Identity Address (Corresponds to Resolved Private Address)
+0x03 Random (Static) Identity Address (Corresponds to Resolved Private Address)
+* Values:
+- 0x00: Public Device Address
+- 0x01: Random Device Address
+- 0x02: Public Identity Address
+- 0x03: Random (Static) Identity Address
+*/
+  uint8_t Address_Type;
+  /** Public Device Address, Random Device Address, Public Identity
+Address or Random (static) Identity Address of the advertising
+device.
+*/
+  uint8_t Address[6];
+  /** Length of the Data[i] field for each device which responded.
+* Values:
+- 0 ... 31
+*/
+  uint8_t Length_Data;
+  /** Length_Data[i] octets of advertising or scan response data formatted
+as defined in [Vol 3] Part C, Section 8.
+*/
+  uint8_t *Data;
+  /** N Size: 1 Octet (signed integer)
+Units: dBm
+* Values:
+- 127: RSSI not available
+- -127 ... 20
+*/
+  uint8_t RSSI;
 } Advertising_Report_t;
-
-
-
-
 
 #endif /* INC_SERVICES_H_ */

@@ -17,7 +17,8 @@
  */
 /* USER CODE END Header */
 
-/* Includes ------------------------------------------------------------------*/
+/* Includes
+ * ------------------------------------------------------------------*/
 #include "stm32f4xx_nucleo_bus.h"
 
 __weak HAL_StatusTypeDef MX_SPI1_Init(SPI_HandleTypeDef *hspi);
@@ -90,7 +91,7 @@ static uint32_t SPI_GetPrescaler(uint32_t clk_src_hz, uint32_t baudrate_mbps);
  * @retval BSP status
  */
 int32_t BSP_SPI1_Init(void) {
-  int32_t ret = BSP_ERROR_NONE;
+  int32_t ret    = BSP_ERROR_NONE;
 
   hspi1.Instance = SPI1;
 
@@ -192,7 +193,6 @@ int32_t BSP_SPI1_SendRecv(uint8_t *pTxData, uint8_t *pRxData, uint16_t Length) {
  * @retval BSP status
  */
 int32_t BSP_SPI1_RegisterDefaultMspCallbacks(void) {
-
   __HAL_SPI_RESET_HANDLE_STATE(&hspi1);
 
   /* Register MspInit Callback */
@@ -247,20 +247,20 @@ int32_t BSP_GetTick(void) { return HAL_GetTick(); }
 /* SPI1 init function */
 
 __weak HAL_StatusTypeDef MX_SPI1_Init(SPI_HandleTypeDef *hspi) {
-  HAL_StatusTypeDef ret = HAL_OK;
+  HAL_StatusTypeDef ret        = HAL_OK;
 
-  hspi->Instance = SPI1;
-  hspi->Init.Mode = SPI_MODE_MASTER;
-  hspi->Init.Direction = SPI_DIRECTION_2LINES;
-  hspi->Init.DataSize = SPI_DATASIZE_8BIT;
-  hspi->Init.CLKPolarity = SPI_POLARITY_LOW;
-  hspi->Init.CLKPhase = SPI_PHASE_2EDGE;
-  hspi->Init.NSS = SPI_NSS_SOFT;
+  hspi->Instance               = SPI1;
+  hspi->Init.Mode              = SPI_MODE_MASTER;
+  hspi->Init.Direction         = SPI_DIRECTION_2LINES;
+  hspi->Init.DataSize          = SPI_DATASIZE_8BIT;
+  hspi->Init.CLKPolarity       = SPI_POLARITY_LOW;
+  hspi->Init.CLKPhase          = SPI_PHASE_2EDGE;
+  hspi->Init.NSS               = SPI_NSS_SOFT;
   hspi->Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_64;
-  hspi->Init.FirstBit = SPI_FIRSTBIT_MSB;
-  hspi->Init.TIMode = SPI_TIMODE_DISABLE;
-  hspi->Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
-  hspi->Init.CRCPolynomial = 10;
+  hspi->Init.FirstBit          = SPI_FIRSTBIT_MSB;
+  hspi->Init.TIMode            = SPI_TIMODE_DISABLE;
+  hspi->Init.CRCCalculation    = SPI_CRCCALCULATION_DISABLE;
+  hspi->Init.CRCPolynomial     = 10;
   if (HAL_SPI_Init(hspi) != HAL_OK) {
     ret = HAL_ERROR;
   }
@@ -279,28 +279,28 @@ static void SPI1_MspInit(SPI_HandleTypeDef *spiHandle) {
   __HAL_RCC_GPIOA_CLK_ENABLE();
   __HAL_RCC_GPIOB_CLK_ENABLE();
   /**SPI1 GPIO Configuration
-  PA6     ------> SPI1_MISO
-  PA7     ------> SPI1_MOSI
-  PB3     ------> SPI1_SCK
-  */
-  GPIO_InitStruct.Pin = BUS_SPI1_MISO_GPIO_PIN;
-  GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+PA6     ------> SPI1_MISO
+PA7     ------> SPI1_MOSI
+PB3     ------> SPI1_SCK
+*/
+  GPIO_InitStruct.Pin       = BUS_SPI1_MISO_GPIO_PIN;
+  GPIO_InitStruct.Mode      = GPIO_MODE_AF_PP;
+  GPIO_InitStruct.Pull      = GPIO_NOPULL;
+  GPIO_InitStruct.Speed     = GPIO_SPEED_FREQ_VERY_HIGH;
   GPIO_InitStruct.Alternate = BUS_SPI1_MISO_GPIO_AF;
   HAL_GPIO_Init(BUS_SPI1_MISO_GPIO_PORT, &GPIO_InitStruct);
 
-  GPIO_InitStruct.Pin = BUS_SPI1_MOSI_GPIO_PIN;
-  GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+  GPIO_InitStruct.Pin       = BUS_SPI1_MOSI_GPIO_PIN;
+  GPIO_InitStruct.Mode      = GPIO_MODE_AF_PP;
+  GPIO_InitStruct.Pull      = GPIO_NOPULL;
+  GPIO_InitStruct.Speed     = GPIO_SPEED_FREQ_VERY_HIGH;
   GPIO_InitStruct.Alternate = BUS_SPI1_MOSI_GPIO_AF;
   HAL_GPIO_Init(BUS_SPI1_MOSI_GPIO_PORT, &GPIO_InitStruct);
 
-  GPIO_InitStruct.Pin = BUS_SPI1_SCK_GPIO_PIN;
-  GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+  GPIO_InitStruct.Pin       = BUS_SPI1_SCK_GPIO_PIN;
+  GPIO_InitStruct.Mode      = GPIO_MODE_AF_PP;
+  GPIO_InitStruct.Pull      = GPIO_NOPULL;
+  GPIO_InitStruct.Speed     = GPIO_SPEED_FREQ_VERY_HIGH;
   GPIO_InitStruct.Alternate = BUS_SPI1_SCK_GPIO_AF;
   HAL_GPIO_Init(BUS_SPI1_SCK_GPIO_PORT, &GPIO_InitStruct);
 
@@ -317,10 +317,10 @@ static void SPI1_MspDeInit(SPI_HandleTypeDef *spiHandle) {
   __HAL_RCC_SPI1_CLK_DISABLE();
 
   /**SPI1 GPIO Configuration
-  PA6     ------> SPI1_MISO
-  PA7     ------> SPI1_MOSI
-  PB3     ------> SPI1_SCK
-  */
+PA6     ------> SPI1_MISO
+PA7     ------> SPI1_MOSI
+PB3     ------> SPI1_SCK
+*/
   HAL_GPIO_DeInit(BUS_SPI1_MISO_GPIO_PORT, BUS_SPI1_MISO_GPIO_PIN);
 
   HAL_GPIO_DeInit(BUS_SPI1_MOSI_GPIO_PORT, BUS_SPI1_MOSI_GPIO_PIN);
@@ -341,9 +341,9 @@ static void SPI1_MspDeInit(SPI_HandleTypeDef *spiHandle) {
  */
 static uint32_t SPI_GetPrescaler(uint32_t clock_src_hz,
                                  uint32_t baudrate_mbps) {
-  uint32_t divisor = 0;
-  uint32_t spi_clk = clock_src_hz;
-  uint32_t presc = 0;
+  uint32_t divisor                 = 0;
+  uint32_t spi_clk                 = clock_src_hz;
+  uint32_t presc                   = 0;
 
   static const uint32_t baudrate[] = {
       SPI_BAUDRATEPRESCALER_2,   SPI_BAUDRATEPRESCALER_4,

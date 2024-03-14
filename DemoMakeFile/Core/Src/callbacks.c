@@ -16,15 +16,15 @@
 
 /*Global Variables*/
 
-uint8_t advtServUUID[100];
-uint8_t advtServUUIDlen = 1;
-uint16_t device_role = 0xFF;
+uint8_t            advtServUUID[100];
+uint8_t            advtServUUIDlen = 1;
+uint16_t           device_role     = 0xFF;
 discoveryContext_t discovery;
 
-extern uint8_t mtu_exchanged;
-extern uint8_t mtu_exchanged_wait;
-extern uint16_t connection_handle;
-extern uint16_t write_char_len;
+extern uint8_t      mtu_exchanged;
+extern uint8_t      mtu_exchanged_wait;
+extern uint16_t     connection_handle;
+extern uint16_t     write_char_len;
 extern volatile int app_flags;
 
 uint8_t local_name[] = {AD_TYPE_COMPLETE_LOCAL_NAME,
@@ -42,8 +42,7 @@ uint8_t local_name[] = {AD_TYPE_COMPLETE_LOCAL_NAME,
                         'D'};
 
 void APP_UserEvtRx(void *pData) {
-
-  int i;
+  int           i;
   hci_spi_pckt *hci_pckt = (hci_spi_pckt *)pData;
   // BLUENRG_PRINTF("PACKET TYPE: %d \r\n", hci_pckt->type);
   // hci_event_pckt* event_pckt = (hci_event_pckt*)hci_pckt->data;
@@ -85,9 +84,7 @@ void APP_UserEvtRx(void *pData) {
       for (i = 0;
            i < (sizeof(hci_events_table) / sizeof(hci_events_table_type));
            i++) {
-
         if (event_pckt->evt == hci_events_table[i].evt_code) {
-
           if (i) {
             BLUENRG_PRINTF("OTHER: OTHER: %d \r\n", i);
           }
@@ -99,7 +96,8 @@ void APP_UserEvtRx(void *pData) {
   }
 }
 
-/* ***************** BlueNRG-1 Stack Callbacks ********************************/
+/* ***************** BlueNRG-1 Stack Callbacks
+ * ********************************/
 
 /*******************************************************************************
  * Function Name  : aci_gap_proc_complete_event.
@@ -112,21 +110,21 @@ void aci_gap_proc_complete_event(uint8_t Procedure_Code, uint8_t Status,
                                  uint8_t Data_Length, uint8_t Data[]) {
   if (Procedure_Code == GAP_GENERAL_DISCOVERY_PROC) {
     /* gap procedure complete has been raised as consequence of a GAP
-       terminate procedure done after a device found event during the discovery
-       procedure */
+   terminate procedure done after a device found event during the
+   discovery procedure */
     if (discovery.do_connect == TRUE) {
-      discovery.do_connect = FALSE;
+      discovery.do_connect            = FALSE;
       discovery.check_disc_proc_timer = FALSE;
-      discovery.startTime = 0;
+      discovery.startTime             = 0;
       /* discovery procedure has been completed and no device found:
-         go to discovery mode */
+   go to discovery mode */
       discovery.device_state = DO_DIRECT_CONNECTION_PROC;
     } else {
       /* discovery procedure has been completed and no device found:
-         go to discovery mode */
+   go to discovery mode */
       discovery.check_disc_proc_timer = FALSE;
-      discovery.startTime = 0;
-      discovery.device_state = ENTER_DISCOVERY_MODE;
+      discovery.startTime             = 0;
+      discovery.device_state          = ENTER_DISCOVERY_MODE;
     }
   }
 }
@@ -151,11 +149,11 @@ void hci_le_connection_complete_event(
 
   discovery.check_disc_proc_timer = FALSE;
   discovery.check_disc_mode_timer = FALSE;
-  discovery.startTime = 0;
+  discovery.startTime             = 0;
 
-  connection_handle = Connection_Handle;
+  connection_handle               = Connection_Handle;
 
-  discovery.device_state = INIT_STATE;
+  discovery.device_state          = INIT_STATE;
 
   /* store device role */
   device_role = Role;
@@ -175,9 +173,9 @@ void hci_le_connection_complete_event(
  * Output         : See file bluenrg1_events.h
  * Return         : See file bluenrg1_events.h
  *******************************************************************************/
-void hci_disconnection_complete_event(uint8_t Status,
+void hci_disconnection_complete_event(uint8_t  Status,
                                       uint16_t Connection_Handle,
-                                      uint8_t Reason) {
+                                      uint8_t  Reason) {
   APP_FLAG_CLEAR(CONNECTED);
 
   /* Make the device connectable again. */
@@ -221,7 +219,7 @@ void aci_gap_pairing_complete_event(uint16_t Connection_Handle, uint8_t Status,
 void hci_le_advertising_report_event(
     uint8_t Num_Reports, Advertising_Report_t Advertising_Report[]) {
   /* Advertising_Report contains all the expected parameters */
-  uint8_t evt_type = Advertising_Report[0].Event_Type;
+  uint8_t evt_type    = Advertising_Report[0].Event_Type;
   uint8_t data_length = Advertising_Report[0].Length_Data;
   uint8_t bdaddr_type = Advertising_Report[0].Address_Type;
   uint8_t bdaddr[6];
@@ -233,8 +231,8 @@ void hci_le_advertising_report_event(
     /* BLE SampleApp device not yet found: check current device found */
     if ((evt_type == ADV_IND) &&
         Find_DeviceName(data_length, Advertising_Report[0].Data)) {
-      discovery.is_device_found = TRUE;
-      discovery.do_connect = TRUE;
+      discovery.is_device_found       = TRUE;
+      discovery.do_connect            = TRUE;
       discovery.check_disc_proc_timer = FALSE;
       discovery.check_disc_mode_timer = FALSE;
       /* store first device found:  address type and address value */
@@ -257,7 +255,7 @@ void hci_le_advertising_report_event(
 void aci_gatt_attribute_modified_event(uint16_t Connection_Handle,
                                        uint16_t Attr_Handle, uint16_t Offset,
                                        uint16_t Attr_Data_Length,
-                                       uint8_t Attr_Data[]) {
+                                       uint8_t  Attr_Data[]) {
   Attribute_Modified_CB(Attr_Handle, Attr_Data_Length, Attr_Data);
 } /* end aci_gatt_attribute_modified_event() */
 
@@ -271,13 +269,13 @@ void aci_gatt_attribute_modified_event(uint16_t Connection_Handle,
 
 extern uint16_t input_report_char_handle;
 extern uint16_t output_report_char_handle;
-void aci_gatt_notification_event(uint16_t Connection_Handle,
-                                 uint16_t Attribute_Handle,
-                                 uint8_t Attribute_Value_Length,
-                                 uint8_t Attribute_Value[]) {
+void            aci_gatt_notification_event(uint16_t Connection_Handle,
+                                            uint16_t Attribute_Handle,
+                                            uint8_t  Attribute_Value_Length,
+                                            uint8_t  Attribute_Value[]) {
   BLUENRG_PRINTF("____aci_gatt_notification_event with "
-                 "output_report_char_handle %d and Attribute_Handle %d \r\n",
-                 output_report_char_handle, Attribute_Handle);
+                                       "output_report_char_handle %d and Attribute_Handle %d \r\n",
+                            output_report_char_handle, Attribute_Handle);
   if (Attribute_Handle == output_report_char_handle + 1) {
     BLUENRG_PRINTF("____ENTERED TO RECEIVE DATA \n");
     receiveData(Attribute_Value, Attribute_Value_Length);
@@ -295,8 +293,8 @@ void aci_gatt_notification_event(uint16_t Connection_Handle,
 
 void aci_gatt_disc_read_char_by_uuid_resp_event(uint16_t Connection_Handle,
                                                 uint16_t Attribute_Handle,
-                                                uint8_t Attribute_Value_Length,
-                                                uint8_t Attribute_Value[]) {
+                                                uint8_t  Attribute_Value_Length,
+                                                uint8_t  Attribute_Value[]) {
   PRINT_DBG("aci_gatt_disc_read_char_by_uuid_resp_event, Connection Handle: "
             "0x%04X\r\n",
             Connection_Handle);
@@ -330,7 +328,7 @@ void aci_gatt_disc_read_char_by_uuid_resp_event(uint16_t Connection_Handle,
  * Return         : See file bluenrg1_events.h
  *******************************************************************************/
 void aci_gatt_proc_complete_event(uint16_t Connection_Handle,
-                                  uint8_t Error_Code) {
+                                  uint8_t  Error_Code) {
   BLUENRG_PRINTF("aci_gatt_proc_complete_event\n\r");
   if (APP_FLAG(START_READ_TX_CHAR_HANDLE) &&
       !APP_FLAG(END_READ_TX_CHAR_HANDLE)) {
@@ -387,7 +385,7 @@ void aci_att_exchange_mtu_resp_event(uint16_t Connection_Handle,
 }
 
 void BLE_Profile_Add_Advertisment_Service_UUID(uint16_t servUUID) {
-  uint8_t indx = advtServUUIDlen;
+  uint8_t indx       = advtServUUIDlen;
 
   advtServUUID[indx] = (uint8_t)(servUUID & 0xFF);
   indx++;
@@ -437,8 +435,8 @@ uint8_t Find_DeviceName(uint8_t data_length, uint8_t *data_value) {
 
   while (index < data_length) {
     /* Advertising data fields: len, type, values */
-    /* Check if field is complete local name and the length is the expected one
-     * for BLE SampleApp  */
+    /* Check if field is complete local name and the length is the expected
+     * one for BLE SampleApp  */
     if (data_value[index + 1] == AD_TYPE_COMPLETE_LOCAL_NAME) {
       /* check if found device name is the expected one: local_name */
       if (BLUENRG_memcmp(&data_value[index + 1], &local_name[0],
@@ -500,8 +498,8 @@ void aci_gap_pass_key_req_event(uint16_t Connection_Handle) {
  * Return         : See file bluenrg1_events.h
  ******************************************************************************/
 void aci_att_read_resp_event(uint16_t Connection_Handle,
-                             uint8_t Event_Data_Length,
-                             uint8_t Attribute_Value[]) {
+                             uint8_t  Event_Data_Length,
+                             uint8_t  Attribute_Value[]) {
   uint8_t i;
   printf("aci_att_read_resp_event________________");
   printf(" Value (HEX): %s", Event_Data_Length > 0 ? "0x" : "No value!");
@@ -516,7 +514,7 @@ void aci_att_read_resp_event(uint16_t Connection_Handle,
   }
 }
 
-void hci_le_connection_update_complete_event(uint8_t Status,
+void hci_le_connection_update_complete_event(uint8_t  Status,
                                              uint16_t Connection_Handle,
                                              uint16_t Conn_Interval,
                                              uint16_t Conn_Latency,

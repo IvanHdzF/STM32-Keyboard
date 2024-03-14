@@ -5,12 +5,12 @@
  *      Author: rjmendez
  */
 
+#include "Keyboard.h"
 #include "StateMachine.h"
 #include "cmsis_os2.h"
-#include "Keyboard.h"
+#include "kbd_process.h"
 #include "main.h"
 #include "stdio.h"
-#include "kbd_process.h"
 
 #include "FreeRTOS.h"
 #include "task.h"
@@ -34,12 +34,12 @@ osStatus_t status;
 
 extern osThreadId_t threadId;
 
-static uint8_t mssgQ_buffer[RX_BUFFER_SIZE];
-static uint8_t rx_buffer[RX_BUFFER_SIZE];
-static uint32_t rx_index = 0;
+static uint8_t  mssgQ_buffer[RX_BUFFER_SIZE];
+static uint8_t  rx_buffer[RX_BUFFER_SIZE];
+static uint32_t rx_index   = 0;
 static uint32_t idleCycles = 0;
 
-uint32_t eventFlags = 0;
+uint32_t eventFlags        = 0;
 
 void gotoSleep();
 void messageQ_TimerCallback();
@@ -47,7 +47,7 @@ void messageQ_TimerCallback();
 void keyboard_Init(UART_HandleTypeDef *huart) {
   uart_Port = huart;
 
-  mssgQ = osMessageQueueNew(MAX_NUM_MESSAGES, MAX_MESSAGE_SIZE, NULL);
+  mssgQ     = osMessageQueueNew(MAX_NUM_MESSAGES, MAX_MESSAGE_SIZE, NULL);
   // In case MessageQueue fails
   if (mssgQ == NULL) {
     while (1)
@@ -87,10 +87,10 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
 
 void messageQ_TimerCallback() {
   uint32_t messagesCount = 0;
-  messagesCount = osMessageQueueGetCount(mssgQ);
+  messagesCount          = osMessageQueueGetCount(mssgQ);
   // Check if queue has data saved inside
   if (messagesCount > 0) {
-    for (int i = 0; i < messagesCount; i++) {
+    for (uint32_t i = 0; i < messagesCount; i++) {
       osMessageQueueGet(mssgQ, &mssgQ_buffer[i], 0, 0);
       // HAL_UART_Transmit(uart_Port, mssgQ_buffer, 1, HAL_MAX_DELAY);
     }

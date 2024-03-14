@@ -42,52 +42,83 @@ uint16_t client_char_config_descriptor_handle,
     report_reference_char_descriptor_handle_feature,
     external_Report_Descriptor_handle;
 
-uint8_t serviceMaxAttributeRecords, encrypKeySize;
+uint8_t  serviceMaxAttributeRecords, encrypKeySize;
 uint16_t charValueLength;
 
 extern uint8_t local_name[];
 
 // Keyboard report descriptor
 uint8_t reportDesc[] = {
-    0x05, 0x01, // USAGE_PAGE (Generic Desktop)
-    0x09, 0x06, // USAGE (Keyboard)
-    0xA1, 0x01, // COLLECTION (Application)
-    0x05, 0x07, // USAGE_PAGE (Keyboard)
+    0x05,
+    0x01, // USAGE_PAGE (Generic Desktop)
+    0x09,
+    0x06, // USAGE (Keyboard)
+    0xA1,
+    0x01, // COLLECTION (Application)
+    0x05,
+    0x07, // USAGE_PAGE (Keyboard)
     // 0x85, 0x01,   // REPORT_ID (1)
     //  1 byte Modifier: Ctrl, Shift and other modifier keys, 8 in total
-    0x19, 0xE0, // USAGE_MINIMUM (kbd LeftControl)
-    0x29, 0xE7, // USAGE_MAXIMUM (kbd Right GUI)
-    0x15, 0x00, // LOGICAL_MINIMUM (0)
-    0x25, 0x01, // LOGICAL_MAXIMUM (1)
-    0x75, 0x01, // REPORT_SIZE (1)
-    0x95, 0x08, // REPORT_COUNT (8)
-    0x81, 0x02, // INPUT (Data,Var,Abs)
+    0x19,
+    0xE0, // USAGE_MINIMUM (kbd LeftControl)
+    0x29,
+    0xE7, // USAGE_MAXIMUM (kbd Right GUI)
+    0x15,
+    0x00, // LOGICAL_MINIMUM (0)
+    0x25,
+    0x01, // LOGICAL_MAXIMUM (1)
+    0x75,
+    0x01, // REPORT_SIZE (1)
+    0x95,
+    0x08, // REPORT_COUNT (8)
+    0x81,
+    0x02, // INPUT (Data,Var,Abs)
     // 1 Reserved byte
-    0x95, 0x01, // REPORT_COUNT (1)
-    0x75, 0x08, // REPORT_SIZE (8)
-    0x81, 0x01, // INPUT (Cnst,Ary,Abs)
+    0x95,
+    0x01, // REPORT_COUNT (1)
+    0x75,
+    0x08, // REPORT_SIZE (8)
+    0x81,
+    0x01, // INPUT (Cnst,Ary,Abs)
     // LEDs for num lock etc
-    0x95, 0x05, // REPORT_COUNT (5)
-    0x75, 0x01, // REPORT_SIZE (1)
-    0x05, 0x08, // USAGE_PAGE (LEDs)
+    0x95,
+    0x05, // REPORT_COUNT (5)
+    0x75,
+    0x01, // REPORT_SIZE (1)
+    0x05,
+    0x08, // USAGE_PAGE (LEDs)
     // 0x85, 0x01, // REPORT_ID (1)
-    0x19, 0x01, // USAGE_MINIMUM (Num Lock)
-    0x29, 0x05, // USAGE_MAXIMUM (Kana)
-    0x91, 0x02, // OUTPUT (Data,Var,Abs)
+    0x19,
+    0x01, // USAGE_MINIMUM (Num Lock)
+    0x29,
+    0x05, // USAGE_MAXIMUM (Kana)
+    0x91,
+    0x02, // OUTPUT (Data,Var,Abs)
     // Reserved 3 bits
-    0x95, 0x01, // REPORT_COUNT (1)
-    0x75, 0x03, // REPORT_SIZE (3)
-    0x91, 0x03, // OUTPUT (Cnst,Var,Abs)
+    0x95,
+    0x01, // REPORT_COUNT (1)
+    0x75,
+    0x03, // REPORT_SIZE (3)
+    0x91,
+    0x03, // OUTPUT (Cnst,Var,Abs)
     /* Slots for 6 keys that can be pressed down at the same time */
-    0x95, 0x06, // REPORT_COUNT (6)
-    0x75, 0x08, // REPORT_SIZE (8)
-    0x15, 0x00, // LOGICAL_MINIMUM (0)
-    0x25, 0x65, // LOGICAL_MAXIMUM (101)
-    0x05, 0x07, // USAGE_PAGE (Keyboard)
-    0x19, 0x00, // USAGE_MINIMUM (Reserved (no event indicated))
-    0x29, 0x65, // USAGE_MAXIMUM (Keyboard Application)
-    0x81, 0x00, // INPUT (Data,Ary,Abs)
-    0xC0,       // END_COLLECTION
+    0x95,
+    0x06, // REPORT_COUNT (6)
+    0x75,
+    0x08, // REPORT_SIZE (8)
+    0x15,
+    0x00, // LOGICAL_MINIMUM (0)
+    0x25,
+    0x65, // LOGICAL_MAXIMUM (101)
+    0x05,
+    0x07, // USAGE_PAGE (Keyboard)
+    0x19,
+    0x00, // USAGE_MINIMUM (Reserved (no event indicated))
+    0x29,
+    0x65, // USAGE_MAXIMUM (Keyboard Application)
+    0x81,
+    0x00, // INPUT (Data,Ary,Abs)
+    0xC0, // END_COLLECTION
 };
 
 /**
@@ -102,7 +133,6 @@ uint8_t reportDesc[] = {
  * @retval Status of the call
  */
 uint8_t hidAddServices(devInfService_Type *devInf) {
-
   uint8_t ret;
 
   ret = addBatteryService();
@@ -132,16 +162,15 @@ uint8_t hidAddServices(devInfService_Type *devInf) {
  * Updates the value for BATTERY LEVEL to 50
  */
 tBleStatus addBatteryService() {
-
-  uint8_t ret;
+  uint8_t        ret;
   Service_UUID_t battery_service_uuid;
-  Char_UUID_t battery_level_char_uuid;
+  Char_UUID_t    battery_level_char_uuid;
   // Char_Desc_Uuid_t char_presentation_format_descriptor;
 
   battery_service_uuid.Service_UUID_16 = BATTERY_SERVICE_SERVICE_UUID;
   battery_level_char_uuid.Char_UUID_16 = BATTERY_LEVEL_CHAR_UUID;
 
-  serviceMaxAttributeRecords = 4;
+  serviceMaxAttributeRecords           = 4;
 
   ret =
       aci_gatt_add_service(UUID_TYPE_16, &battery_service_uuid, PRIMARY_SERVICE,
@@ -152,18 +181,18 @@ tBleStatus addBatteryService() {
   }
 
   charValueLength = 20;
-  encrypKeySize = 10;
-  ret = aci_gatt_add_char(battery_service_handle, UUID_TYPE_16,
-                          &battery_level_char_uuid, charValueLength,
-                          CHAR_PROP_READ, ATTR_PERMISSION,
-                          GATT_NOTIFY_ATTRIBUTE_WRITE, encrypKeySize,
-                          CHAR_VALUE_LEN_CONSTANT, &battery_level_char_handle);
+  encrypKeySize   = 10;
+  ret             = aci_gatt_add_char(battery_service_handle, UUID_TYPE_16,
+                                      &battery_level_char_uuid, charValueLength,
+                                      CHAR_PROP_READ, ATTR_PERMISSION,
+                                      GATT_NOTIFY_ATTRIBUTE_WRITE, encrypKeySize,
+                                      CHAR_VALUE_LEN_CONSTANT, &battery_level_char_handle);
   if (ret != BLE_STATUS_SUCCESS) {
     BLUENRG_PRINTF("Error in Adding Char for BATTERY SERVICE 0x%02x\n", ret);
     return ret;
   }
   uint8_t batteryLevel = 75;
-  ret = aci_gatt_update_char_value_ext(
+  ret                  = aci_gatt_update_char_value_ext(
       0, battery_service_handle, battery_level_char_handle, 0,
       sizeof(batteryLevel), 0, sizeof(batteryLevel), (uint8_t *)&batteryLevel);
   if (ret != BLE_STATUS_SUCCESS) {
@@ -190,27 +219,26 @@ tBleStatus addBatteryService() {
  * calls updateDIService() to update some characteristics
  */
 tBleStatus addDeviceInformationService(devInfService_Type *devInf) {
-
   uint8_t ret;
 
   Service_UUID_t device_info_service_uuid;
-  Char_UUID_t system_id_char_uuid, model_no_char_uuid, serial_no_char_uuid,
+  Char_UUID_t    system_id_char_uuid, model_no_char_uuid, serial_no_char_uuid,
       firmware_no_char_uuid, hardware_no_char_uuid, software_no_char_uuid,
       manufacturer_name_char_uuid, ieee_cert_char_uuid, pnp_id_char_uuid;
 
   device_info_service_uuid.Service_UUID_16 = DEVICE_INFORMATION_SERVICE_UUID;
 
-  system_id_char_uuid.Char_UUID_16 = SYSTEM_ID_UUID;
-  model_no_char_uuid.Char_UUID_16 = MODEL_NUMBER_UUID;
-  serial_no_char_uuid.Char_UUID_16 = SERIAL_NUMBER_UUID;
-  firmware_no_char_uuid.Char_UUID_16 = FIRMWARE_REVISION_UUID;
-  hardware_no_char_uuid.Char_UUID_16 = HARDWARE_REVISION_UUID;
-  software_no_char_uuid.Char_UUID_16 = SOFTWARE_REVISION_UUID;
+  system_id_char_uuid.Char_UUID_16         = SYSTEM_ID_UUID;
+  model_no_char_uuid.Char_UUID_16          = MODEL_NUMBER_UUID;
+  serial_no_char_uuid.Char_UUID_16         = SERIAL_NUMBER_UUID;
+  firmware_no_char_uuid.Char_UUID_16       = FIRMWARE_REVISION_UUID;
+  hardware_no_char_uuid.Char_UUID_16       = HARDWARE_REVISION_UUID;
+  software_no_char_uuid.Char_UUID_16       = SOFTWARE_REVISION_UUID;
   manufacturer_name_char_uuid.Char_UUID_16 = MANUFACTURER_NAME_UUID;
-  ieee_cert_char_uuid.Char_UUID_16 = IEEE_CERTIFICATION_UUID;
-  pnp_id_char_uuid.Char_UUID_16 = PNP_ID_UUID;
+  ieee_cert_char_uuid.Char_UUID_16         = IEEE_CERTIFICATION_UUID;
+  pnp_id_char_uuid.Char_UUID_16            = PNP_ID_UUID;
 
-  serviceMaxAttributeRecords = 26;
+  serviceMaxAttributeRecords               = 26;
   ret = aci_gatt_add_service(UUID_TYPE_16, &device_info_service_uuid,
                              PRIMARY_SERVICE, serviceMaxAttributeRecords,
                              &dif_service_handle);
@@ -220,8 +248,8 @@ tBleStatus addDeviceInformationService(devInfService_Type *devInf) {
   }
 
   charValueLength = 20;
-  encrypKeySize = 10;
-  ret = aci_gatt_add_char(
+  encrypKeySize   = 10;
+  ret             = aci_gatt_add_char(
       dif_service_handle, UUID_TYPE_16, &manufacturer_name_char_uuid,
       charValueLength, CHAR_PROP_READ, ATTR_PERMISSION_NONE,
       GATT_DONT_NOTIFY_EVENTS, encrypKeySize, CHAR_VALUE_LEN_CONSTANT,
@@ -234,8 +262,8 @@ tBleStatus addDeviceInformationService(devInfService_Type *devInf) {
   }
 
   charValueLength = 20;
-  encrypKeySize = 10;
-  ret = aci_gatt_add_char(
+  encrypKeySize   = 10;
+  ret             = aci_gatt_add_char(
       dif_service_handle, UUID_TYPE_16, &system_id_char_uuid, charValueLength,
       CHAR_PROP_READ, ATTR_PERMISSION_NONE, GATT_DONT_NOTIFY_EVENTS,
       encrypKeySize, CHAR_VALUE_LEN_CONSTANT, &system_id_char_handle);
@@ -247,7 +275,7 @@ tBleStatus addDeviceInformationService(devInfService_Type *devInf) {
   }
 
   charValueLength = 20;
-  encrypKeySize = 10;
+  encrypKeySize   = 10;
   ret = aci_gatt_add_char(dif_service_handle, UUID_TYPE_16, &model_no_char_uuid,
                           charValueLength, CHAR_PROP_READ, ATTR_PERMISSION_NONE,
                           GATT_DONT_NOTIFY_EVENTS, encrypKeySize,
@@ -260,8 +288,8 @@ tBleStatus addDeviceInformationService(devInfService_Type *devInf) {
   }
 
   charValueLength = 20;
-  encrypKeySize = 10;
-  ret = aci_gatt_add_char(
+  encrypKeySize   = 10;
+  ret             = aci_gatt_add_char(
       dif_service_handle, UUID_TYPE_16, &serial_no_char_uuid, charValueLength,
       CHAR_PROP_READ, ATTR_PERMISSION_NONE, GATT_DONT_NOTIFY_EVENTS,
       encrypKeySize, CHAR_VALUE_LEN_CONSTANT, &serial_number_char_handle);
@@ -273,8 +301,8 @@ tBleStatus addDeviceInformationService(devInfService_Type *devInf) {
   }
 
   charValueLength = 20;
-  encrypKeySize = 10;
-  ret = aci_gatt_add_char(
+  encrypKeySize   = 10;
+  ret             = aci_gatt_add_char(
       dif_service_handle, UUID_TYPE_16, &firmware_no_char_uuid, charValueLength,
       CHAR_PROP_READ, ATTR_PERMISSION_NONE, GATT_DONT_NOTIFY_EVENTS,
       encrypKeySize, CHAR_VALUE_LEN_CONSTANT, &firmware_number_char_handle);
@@ -286,8 +314,8 @@ tBleStatus addDeviceInformationService(devInfService_Type *devInf) {
   }
 
   charValueLength = 20;
-  encrypKeySize = 10;
-  ret = aci_gatt_add_char(
+  encrypKeySize   = 10;
+  ret             = aci_gatt_add_char(
       dif_service_handle, UUID_TYPE_16, &hardware_no_char_uuid, charValueLength,
       CHAR_PROP_READ, ATTR_PERMISSION_NONE, GATT_DONT_NOTIFY_EVENTS,
       encrypKeySize, CHAR_VALUE_LEN_CONSTANT, &hardware_number_char_handle);
@@ -299,8 +327,8 @@ tBleStatus addDeviceInformationService(devInfService_Type *devInf) {
   }
 
   charValueLength = 20;
-  encrypKeySize = 10;
-  ret = aci_gatt_add_char(
+  encrypKeySize   = 10;
+  ret             = aci_gatt_add_char(
       dif_service_handle, UUID_TYPE_16, &software_no_char_uuid, charValueLength,
       CHAR_PROP_READ, ATTR_PERMISSION_NONE, GATT_DONT_NOTIFY_EVENTS,
       encrypKeySize, CHAR_VALUE_LEN_CONSTANT, &software_number_char_handle);
@@ -312,8 +340,8 @@ tBleStatus addDeviceInformationService(devInfService_Type *devInf) {
   }
 
   charValueLength = 20;
-  encrypKeySize = 10;
-  ret = aci_gatt_add_char(
+  encrypKeySize   = 10;
+  ret             = aci_gatt_add_char(
       dif_service_handle, UUID_TYPE_16, &ieee_cert_char_uuid, charValueLength,
       CHAR_PROP_READ, ATTR_PERMISSION_NONE, GATT_DONT_NOTIFY_EVENTS,
       encrypKeySize, CHAR_VALUE_LEN_CONSTANT, &ieee_certification_char_handle);
@@ -325,15 +353,15 @@ tBleStatus addDeviceInformationService(devInfService_Type *devInf) {
   }
 
   charValueLength = 20;
-  encrypKeySize = 10;
+  encrypKeySize   = 10;
   ret = aci_gatt_add_char(dif_service_handle, UUID_TYPE_16, &pnp_id_char_uuid,
                           charValueLength, CHAR_PROP_READ, ATTR_PERMISSION_NONE,
                           GATT_DONT_NOTIFY_EVENTS, encrypKeySize,
                           CHAR_VALUE_LEN_CONSTANT, &pnp_id_char_handle);
   if (ret != BLE_STATUS_SUCCESS) {
-    BLUENRG_PRINTF(
-        "Error in Adding Char (PNP ID) for DEVICE INFORMATION SERVICE 0x%02x\n",
-        ret);
+    BLUENRG_PRINTF("Error in Adding Char (PNP ID) for DEVICE INFORMATION "
+                   "SERVICE 0x%02x\n",
+                   ret);
     return ret;
   }
 
@@ -355,9 +383,9 @@ tBleStatus addDeviceInformationService(devInfService_Type *devInf) {
  * Characteristic (0x2A4C) CONTROL POINT
  */
 tBleStatus addHumanInterfaceService() {
-  uint8_t ret;
+  uint8_t        ret;
   Service_UUID_t hid_service_uuid;
-  Char_UUID_t protocol_mode_char_uuid, input_report_char_uuid,
+  Char_UUID_t    protocol_mode_char_uuid, input_report_char_uuid,
       output_report_char_uuid, feature_report_char_uuid, report_map_char_uuid,
       boot_keyboard_input_char_uuid, boot_keyboard_output_char_uuid,
       hid_information_char_uuid, hid_control_point_char_uuid;
@@ -367,18 +395,18 @@ tBleStatus addHumanInterfaceService() {
       report_reference_descriptor_feature_uuid,
       client_charac_config_descriptor_uuid;
 
-  hid_service_uuid.Service_UUID_16 = HUMAN_INTERFACE_DEVICE_SERVICE_UUID;
+  hid_service_uuid.Service_UUID_16      = HUMAN_INTERFACE_DEVICE_SERVICE_UUID;
 
-  protocol_mode_char_uuid.Char_UUID_16 = PROTOCOL_MODE_CHAR_UUID;
-  input_report_char_uuid.Char_UUID_16 = REPORT_CHAR_UUID;
-  output_report_char_uuid.Char_UUID_16 = REPORT_CHAR_UUID;
+  protocol_mode_char_uuid.Char_UUID_16  = PROTOCOL_MODE_CHAR_UUID;
+  input_report_char_uuid.Char_UUID_16   = REPORT_CHAR_UUID;
+  output_report_char_uuid.Char_UUID_16  = REPORT_CHAR_UUID;
   feature_report_char_uuid.Char_UUID_16 = REPORT_CHAR_UUID;
-  report_map_char_uuid.Char_UUID_16 = REPORT_MAP_CHAR_UUID;
+  report_map_char_uuid.Char_UUID_16     = REPORT_MAP_CHAR_UUID;
   boot_keyboard_input_char_uuid.Char_UUID_16 =
       BOOT_KEYBOARD_INPUT_REPORT_CHAR_UUID;
   boot_keyboard_output_char_uuid.Char_UUID_16 =
       BOOT_KEYBOARD_OUTPUT_REPORT_CHAR_UUID;
-  hid_information_char_uuid.Char_UUID_16 = HID_INFORMATION_CHAR_UUID;
+  hid_information_char_uuid.Char_UUID_16   = HID_INFORMATION_CHAR_UUID;
   hid_control_point_char_uuid.Char_UUID_16 = HID_CONTROL_POINT_CHAR_UUID;
   report_reference_descriptor_input_uuid.Char_UUID_16 =
       HID_REPORT_REFERENCE_CHAR_DESCRIPTOR;
@@ -399,8 +427,8 @@ tBleStatus addHumanInterfaceService() {
 
   // INPUT REPORT
   charValueLength = 8;
-  encrypKeySize = 10;
-  ret = aci_gatt_add_char(
+  encrypKeySize   = 10;
+  ret             = aci_gatt_add_char(
       hid_service_handle, UUID_TYPE_16, &input_report_char_uuid,
       charValueLength, CHAR_PROP_READ | CHAR_PROP_NOTIFY | CHAR_PROP_WRITE,
       ATTR_PERMISSION, GATT_NOTIFY_ATTRIBUTE_WRITE, encrypKeySize,
@@ -419,7 +447,7 @@ tBleStatus addHumanInterfaceService() {
 
   // adding report reference characteristic descriptor for INPUT REPORT
   uint8_t reportType[2] = {0, 1}; // input report
-  ret = aci_gatt_add_char_desc(
+  ret                   = aci_gatt_add_char_desc(
       hid_service_handle, input_report_char_handle, UUID_TYPE_16,
       &report_reference_descriptor_input_uuid, 5, 2, reportType,
       ATTR_PERMISSION, ATTR_ACCESS_READ_ONLY, GATT_DONT_NOTIFY_EVENTS, 10,
@@ -427,8 +455,8 @@ tBleStatus addHumanInterfaceService() {
 
   // OUTPUT REPORT
   charValueLength = 8;
-  encrypKeySize = 10;
-  ret = aci_gatt_add_char(
+  encrypKeySize   = 10;
+  ret             = aci_gatt_add_char(
       hid_service_handle, UUID_TYPE_16, &output_report_char_uuid,
       charValueLength,
       CHAR_PROP_READ | CHAR_PROP_WRITE_WITHOUT_RESP | CHAR_PROP_WRITE,
@@ -442,7 +470,7 @@ tBleStatus addHumanInterfaceService() {
 
   // adding report reference characteristic descriptor for output REPORT
   reportType[1] = 2; // output report
-  ret = aci_gatt_add_char_desc(
+  ret           = aci_gatt_add_char_desc(
       hid_service_handle, input_report_char_handle, UUID_TYPE_16,
       &report_reference_descriptor_output_uuid, 5, 2, reportType,
       ATTR_PERMISSION, ATTR_ACCESS_READ_ONLY, GATT_NOTIFY_ATTRIBUTE_WRITE, 10,
@@ -450,8 +478,8 @@ tBleStatus addHumanInterfaceService() {
 
   // FEATURE REPORT
   charValueLength = 8;
-  encrypKeySize = 10;
-  ret = aci_gatt_add_char(
+  encrypKeySize   = 10;
+  ret             = aci_gatt_add_char(
       hid_service_handle, UUID_TYPE_16, &feature_report_char_uuid,
       charValueLength,
       CHAR_PROP_READ | CHAR_PROP_WRITE_WITHOUT_RESP | CHAR_PROP_WRITE,
@@ -465,7 +493,7 @@ tBleStatus addHumanInterfaceService() {
 
   // adding report reference characteristic descriptor for feature REPORT
   reportType[1] = 3; // feature report
-  ret = aci_gatt_add_char_desc(
+  ret           = aci_gatt_add_char_desc(
       hid_service_handle, input_report_char_handle, UUID_TYPE_16,
       &report_reference_descriptor_feature_uuid, 5, 2, reportType,
       ATTR_PERMISSION, ATTR_ACCESS_READ_ONLY, GATT_DONT_NOTIFY_EVENTS, 10,
@@ -473,8 +501,8 @@ tBleStatus addHumanInterfaceService() {
       &report_reference_char_descriptor_handle_feature);
 
   charValueLength = 1;
-  encrypKeySize = 10;
-  ret = aci_gatt_add_char(
+  encrypKeySize   = 10;
+  ret             = aci_gatt_add_char(
       hid_service_handle, UUID_TYPE_16, &protocol_mode_char_uuid,
       charValueLength, CHAR_PROP_READ | CHAR_PROP_WRITE_WITHOUT_RESP,
       ATTR_PERMISSION, GATT_NOTIFY_ATTRIBUTE_WRITE, encrypKeySize,
@@ -486,8 +514,8 @@ tBleStatus addHumanInterfaceService() {
   }
 
   charValueLength = sizeof(reportDesc);
-  encrypKeySize = 10;
-  ret = aci_gatt_add_char(
+  encrypKeySize   = 10;
+  ret             = aci_gatt_add_char(
       hid_service_handle, UUID_TYPE_16, &report_map_char_uuid, charValueLength,
       CHAR_PROP_READ | CHAR_PROP_WRITE_WITHOUT_RESP, ATTR_PERMISSION,
       GATT_DONT_NOTIFY_EVENTS, encrypKeySize, CHAR_VALUE_LEN_CONSTANT,
@@ -508,37 +536,37 @@ tBleStatus addHumanInterfaceService() {
   }
 
   charValueLength = 20;
-  encrypKeySize = 10;
-  ret = aci_gatt_add_char(
+  encrypKeySize   = 10;
+  ret             = aci_gatt_add_char(
       hid_service_handle, UUID_TYPE_16, &boot_keyboard_input_char_uuid,
       charValueLength, CHAR_PROP_READ | CHAR_PROP_NOTIFY, ATTR_PERMISSION,
       GATT_NOTIFY_ATTRIBUTE_WRITE, encrypKeySize, CHAR_VALUE_LEN_CONSTANT,
       &boot_keyboard_input_char_handle);
   if (ret != BLE_STATUS_SUCCESS) {
-    BLUENRG_PRINTF(
-        "Error in Adding Char (BOOT KEYBOARD INPUT) for HID SERVICE 0x%02x\n",
-        ret);
+    BLUENRG_PRINTF("Error in Adding Char (BOOT KEYBOARD INPUT) for HID "
+                   "SERVICE 0x%02x\n",
+                   ret);
     return ret;
   }
 
   charValueLength = 20;
-  encrypKeySize = 10;
-  ret = aci_gatt_add_char(
+  encrypKeySize   = 10;
+  ret             = aci_gatt_add_char(
       hid_service_handle, UUID_TYPE_16, &boot_keyboard_output_char_uuid,
       charValueLength,
       CHAR_PROP_READ | CHAR_PROP_WRITE | CHAR_PROP_WRITE_WITHOUT_RESP,
       ATTR_PERMISSION, GATT_NOTIFY_ATTRIBUTE_WRITE, encrypKeySize,
       CHAR_VALUE_LEN_CONSTANT, &boot_keyboard_output_char_handle);
   if (ret != BLE_STATUS_SUCCESS) {
-    BLUENRG_PRINTF(
-        "Error in Adding Char (BOOT KEYBOARD OUTPUT) for HID SERVICE 0x%02x\n",
-        ret);
+    BLUENRG_PRINTF("Error in Adding Char (BOOT KEYBOARD OUTPUT) for HID "
+                   "SERVICE 0x%02x\n",
+                   ret);
     return ret;
   }
 
   charValueLength = 20;
-  encrypKeySize = 10;
-  ret = aci_gatt_add_char(
+  encrypKeySize   = 10;
+  ret             = aci_gatt_add_char(
       hid_service_handle, UUID_TYPE_16, &hid_information_char_uuid,
       charValueLength, CHAR_PROP_READ, ATTR_PERMISSION, GATT_DONT_NOTIFY_EVENTS,
       encrypKeySize, CHAR_VALUE_LEN_CONSTANT, &hid_info_char_handle);
@@ -580,9 +608,9 @@ tBleStatus addHumanInterfaceService() {
 
   tHidInfoChar appHidServData;
 
-  appHidServData.bcdHID = 0x0111;
+  appHidServData.bcdHID       = 0x0111;
   appHidServData.bCountryCode = 0x00;
-  appHidServData.flags = 0x02;
+  appHidServData.flags        = 0x02;
 
   ret = aci_gatt_update_char_value(hid_service_handle, hid_info_char_handle, 0,
                                    sizeof(appHidServData),
@@ -595,8 +623,8 @@ tBleStatus addHumanInterfaceService() {
   }
 
   charValueLength = 20;
-  encrypKeySize = 10;
-  ret = aci_gatt_add_char(
+  encrypKeySize   = 10;
+  ret             = aci_gatt_add_char(
       hid_service_handle, UUID_TYPE_16, &hid_control_point_char_uuid,
       charValueLength, CHAR_PROP_WRITE_WITHOUT_RESP, ATTR_PERMISSION,
       GATT_NOTIFY_ATTRIBUTE_WRITE, encrypKeySize, CHAR_VALUE_LEN_CONSTANT,
@@ -636,7 +664,7 @@ void updateDIService(devInfService_Type *devInf) {
   devInf->pnpID[5] = 0xec;
   devInf->pnpID[6] = 0x00;
 
-  ret = aci_gatt_update_char_value_ext(
+  ret              = aci_gatt_update_char_value_ext(
       0, dif_service_handle, manufacturer_name_char_handle, GATT_LOCAL_UPDATE,
       20, 0, sizeof(devInf->manufacName), devInf->manufacName);
 
