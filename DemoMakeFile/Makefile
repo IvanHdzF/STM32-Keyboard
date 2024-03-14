@@ -15,7 +15,7 @@ C_FLAGS         += -DBLUENRG2_DEBUG
 endif
 
 ifeq ($(PLATFORM),Windows_NT)
-    BUILD_SYSTEM ?= MinGW Makefiles
+    BUILD_SYSTEM ?= MSYS Makefiles
 else
     ifeq ($(PLATFORM),Linux)
         BUILD_SYSTEM ?= Unix Makefiles
