@@ -29,8 +29,12 @@ extern "C" {
 #include "stm32f4xx_hal.h"
 #include <string.h>
 
+/*---------- Print messages from BLE2 files at user level -----------*/
+#define BLE2_DEBUG      1
 /*---------- Print the data travelling over the SPI in the .csv format compatible with the ST BlueNRG GUI -----------*/
 #define PRINT_CSV_FORMAT      0
+/*---------- Print messages from BLE2 files at middleware level -----------*/
+#define BLUENRG2_DEBUG      1
 /*---------- Number of Bytes reserved for HCI Read Packet -----------*/
 #define HCI_READ_PACKET_SIZE      128
 /*---------- Number of Bytes reserved for HCI Max Payload -----------*/

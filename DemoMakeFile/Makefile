@@ -6,13 +6,6 @@ BUILD_DIR ?= build
 FIRMWARE := $(BUILD_DIR)/$(PROJECT_NAME).bin
 BUILD_TYPE ?= Debug
 PLATFORM = $(if $(OS),$(OS),$(shell uname -s))
-# Device specific!
-DEVICE ?= STM32F446xx
-DEBUG ?= 0
-ifneq ($(DEBUG),0)
-C_FLAGS         += -DBLE2_DEBUG
-C_FLAGS         += -DBLUENRG2_DEBUG
-endif
 
 ifeq ($(PLATFORM),Windows_NT)
     BUILD_SYSTEM ?= MinGW Makefiles
@@ -24,17 +17,16 @@ else
         exit 1
     endif
 endif
-CMAKE_FLAGS := -DCMAKE_C_FLAGS="-fdata-sections -ffunction-sections -specs=nano.specs -specs=nosys.specs ${C_FLAGS} -Wl,--gc-sections"
+
 all: build
 
 build: cmake
 	$(MAKE) -C $(BUILD_DIR) --no-print-directory
-	@echo Flags are: $(C_FLAGS)
 
 cmake: $(BUILD_DIR)/Makefile
 
 $(BUILD_DIR)/Makefile: CMakeLists.txt
-	cmake $(CMAKE_FLAGS)\
+	cmake \
 		-G "$(BUILD_SYSTEM)" \
 		-B$(BUILD_DIR) \
 		-DPROJECT_NAME=$(PROJECT_NAME) \
@@ -45,12 +37,11 @@ $(BUILD_DIR)/Makefile: CMakeLists.txt
 SRCS := $(shell find Core -name '*.[ch]' -or -name '*.[ch]pp')
 format: $(addsuffix .format,$(SRCS))
 %.format: %
-	clang-format -i -style=file $<
+	clang-format -i $<
 
-help:
-	@echo BT KBd documentation:
-	@echo $(DEVICE)
-	@echo $(DEBUG)
+
+# Device specific!
+DEVICE ?= STM32F446xx
 
 flash-st: build
 	st-flash --reset write $(FIRMWARE) 0x08000000
