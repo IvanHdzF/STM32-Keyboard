@@ -26,7 +26,6 @@
  * ---------------------------------------------------*/
 
 void Init() {
-
   uint8_t ret;
   printf("\r\n");
   printf(" ----------------------------------------------\r\n");
@@ -45,17 +44,17 @@ void Init() {
 }
 
 uint8_t Configure_HidPeripheral(void) {
-  uint8_t ret;
+  uint8_t            ret;
   devInfService_Type devInf;
-  connParam_Type connParam;
-  uint8_t addr[] = PERIPHERAL_PUBLIC_ADDRESS;
+  connParam_Type     connParam;
+  uint8_t            addr[] = PERIPHERAL_PUBLIC_ADDRESS;
   uint8_t dev_name[] = {'S', 'T', 'K', 'e', 'y', 'b', 'o', 'a', 'r', 'd'};
   // uint8_t local_name[]={AD_TYPE_COMPLETE_LOCAL_NAME,'S', 'T', 'K', 'e', 'y',
   // 'b', 'o', 'a', 'r', 'd'};
   /* HID Peripheral Init */
-  connParam.interval_min = 0x10;
-  connParam.interval_max = 0x14;
-  connParam.slave_latency = 0x14;
+  connParam.interval_min       = 0x10;
+  connParam.interval_max       = 0x14;
+  connParam.slave_latency      = 0x14;
   connParam.timeout_multiplier = 0xD2;
   ret = hidDevice_Init(IO_CAP_DISPLAY_ONLY, connParam, sizeof(dev_name),
                        dev_name, addr);
@@ -82,8 +81,8 @@ uint8_t Configure_HidPeripheral(void) {
   /**** Setup the GATT Database ****/
 
   /* Device Information Service:
-     NOTE: memcpy length parameter must be equal to defined macro parameter
-     length on hid_peripheral_config.h file */
+   NOTE: memcpy length parameter must be equal to defined macro parameter
+   length on hid_peripheral_config.h file */
   memcpy(devInf.manufacName, "ST Micro ", MANUFAC_NAME_LEN);
   memcpy(devInf.modelNumber, "0001", MODEL_NUMB_LEN);
   memcpy(devInf.fwRevision, "0630", FW_REV_LEN);
@@ -96,7 +95,7 @@ uint8_t Configure_HidPeripheral(void) {
   devInf.pnpID[5] = 0xec;
   devInf.pnpID[6] = 0x00;
 
-  ret = hidAddServices(&devInf);
+  ret             = hidAddServices(&devInf);
   if (ret != BLE_STATUS_SUCCESS) {
     BLUENRG_PRINTF("Error in hidAddServices() 0x%02x\n", ret);
     return ret;
@@ -104,11 +103,11 @@ uint8_t Configure_HidPeripheral(void) {
 
   /* Set the HID Peripheral device discoverable */
   /*  ret = hidSetDeviceDiscoverable(LIMITED_DISCOVERABLE_MODE,
-    sizeof(local_name), local_name); if (ret != BLE_STATUS_SUCCESS) {
-          BLUENRG_PRINTF("Error in hidSetDeviceDiscoverable() 0x%02x\n", ret);
-          return ret;
-    }
-    */
+  sizeof(local_name), local_name); if (ret != BLE_STATUS_SUCCESS) {
+        BLUENRG_PRINTF("Error in hidSetDeviceDiscoverable() 0x%02x\n", ret);
+        return ret;
+  }
+  */
   BLE_Profile_Add_Advertisment_Service_UUID(
       HUMAN_INTERFACE_DEVICE_SERVICE_UUID);
   BLE_Profile_Add_Advertisment_Service_UUID(BATTERY_SERVICE_SERVICE_UUID);
@@ -162,7 +161,7 @@ uint8_t hidSetTxPower(uint8_t level) {
 uint8_t hidDevice_Init(uint8_t IO_Capability, connParam_Type connParam,
                        uint8_t dev_name_len, uint8_t *dev_name, uint8_t *addr) {
   uint16_t service_handle, dev_name_char_handle, appearance_char_handle;
-  uint8_t ret;
+  uint8_t  ret;
 
   /* Set the device public address */
   ret = aci_hal_write_config_data(CONFIG_DATA_PUBADDR_OFFSET,

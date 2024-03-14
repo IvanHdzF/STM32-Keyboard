@@ -15,22 +15,23 @@
 #include "services.h"
 #include "stdint.h"
 
-volatile int app_flags = SET_CONNECTABLE;
+volatile int app_flags      = SET_CONNECTABLE;
 
-uint16_t connection_handle = 0;
-uint8_t protocolMode = 0;
-uint16_t discovery_time = 3000;
-uint8_t mtu_exchanged = 0;
-uint8_t mtu_exchanged_wait = 0;
-uint8_t protocolModeSet = 0;
+uint16_t connection_handle  = 0;
+uint8_t  protocolMode       = 0;
+uint16_t discovery_time     = 3000;
+uint8_t  mtu_exchanged      = 0;
+uint8_t  mtu_exchanged_wait = 0;
+uint8_t  protocolModeSet    = 0;
 uint16_t write_char_len;
-extern uint16_t hid_service_handle, protocol_mode_char_handle;
-extern uint16_t device_role;
+
+extern uint16_t           hid_service_handle, protocol_mode_char_handle;
+extern uint16_t           device_role;
 extern discoveryContext_t discovery;
-extern uint8_t advtServUUID[100];
-extern uint8_t advtServUUIDlen;
-extern uint8_t local_name[];
-extern uint8_t receivedData;
+extern uint8_t            advtServUUID[100];
+extern uint8_t            advtServUUIDlen;
+extern uint8_t            local_name[];
+extern uint8_t            receivedData;
 
 extern uint16_t input_report_char_handle;
 extern uint16_t output_report_char_handle;
@@ -38,9 +39,11 @@ extern uint16_t output_report_char_handle;
 uint8_t Local_Name_Length = 13;
 
 void BLE_Process(void) {
-  uint8_t notifications_enabled_val = 0;
+  uint8_t  notifications_enabled_val     = 0;
+  uint8_t  output_val                    = 0;
   uint16_t sizeNotifications_enabled_val = sizeof(notifications_enabled_val);
-  uint8_t ret;
+  uint16_t sizeOutput_val                = sizeof(output_val);
+  uint8_t  ret;
   // uint8_t data[] = "s";
 
   hci_user_evt_proc();
@@ -49,7 +52,8 @@ void BLE_Process(void) {
     Connection_StateMachine();
   }
 
-  if (APP_FLAG(CONNECTED) && !protocolModeSet) {
+  if (APP_FLAG(CONNECTED) &&
+      !protocolModeSet) { // TODO: Move this to the if below
     protocolMode = REPORT_PROTOCOL_MODE;
     BLUENRG_PRINTF("protocol Mode was set to 1\r\n");
     aci_gatt_update_char_value(hid_service_handle, protocol_mode_char_handle, 0,
@@ -62,7 +66,7 @@ void BLE_Process(void) {
                      mtu_exchanged, mtu_exchanged_wait);
 
       mtu_exchanged_wait = 1;
-      ret = aci_gatt_exchange_config(connection_handle);
+      ret                = aci_gatt_exchange_config(connection_handle);
       if (ret != BLE_STATUS_SUCCESS) {
         BLUENRG_PRINTF("aci_gatt_exchange_configuration error 0x%02x\r\n", ret);
       }
@@ -74,18 +78,17 @@ void BLE_Process(void) {
         &sizeNotifications_enabled_val, &sizeNotifications_enabled_val,
         &notifications_enabled_val);
     if (ret != BLE_STATUS_SUCCESS) {
-      printf(" Unable to read data from device\r\n");
+      BLUENRG_PRINTF(" Unable to read data from device\r\n");
     }
-    printf("NOTIFICATIONS: %d\n\r", notifications_enabled_val);
+    BLUENRG_PRINTF("NOTIFICATIONS: %d\n\r", notifications_enabled_val);
 
-    ret = aci_gatt_read_handle_value(
-        output_report_char_handle + 1, 0, sizeNotifications_enabled_val,
-        &sizeNotifications_enabled_val, &sizeNotifications_enabled_val,
-        &notifications_enabled_val);
+    ret = aci_gatt_read_handle_value(output_report_char_handle + 1, 0,
+                                     output_val, &sizeOutput_val,
+                                     &sizeOutput_val, &output_val);
     if (ret != BLE_STATUS_SUCCESS) {
-      printf(" Unable to read data from device\r\n");
+      BLUENRG_PRINTF(" Unable to read data from device\r\n");
     }
-    printf("____Output Report: %d\n\r", notifications_enabled_val);
+    BLUENRG_PRINTF("____Output Report: %d\n\r", output_val);
   }
   if (APP_FLAG(CONNECTED) && notifications_enabled_val) {
     BLUENRG_PRINTF("Trying to print smth\r\n");
@@ -108,10 +111,10 @@ void Connection_StateMachine(void) {
     //  BLUENRG_PRINTF("INSIDE START_DISCOVERY_PROC\r\n");
 
     /*
-    ADV_IND,
-    (ADV_INTERVAL_MIN_MS*1000)/625,
-    (ADV_INTERVAL_MAX_MS*1000)/625,
-    */
+ADV_IND,
+(ADV_INTERVAL_MIN_MS*1000)/625,
+(ADV_INTERVAL_MAX_MS*1000)/625,
+*/
 
     ret = aci_gap_start_general_discovery_proc(
         (ADV_INTERVAL_MIN_MS * 1000) / 625, (ADV_INTERVAL_MAX_MS * 1000) / 625,
@@ -122,36 +125,37 @@ void Connection_StateMachine(void) {
       discovery.device_state = DISCOVERY_ERROR;
     } else {
       BLUENRG_PRINTF("aci_gap_start_limited_discovery_proc OK\r\n");
-      discovery.startTime = HAL_GetTick();
+      discovery.startTime             = HAL_GetTick();
       discovery.check_disc_proc_timer = TRUE;
       discovery.check_disc_mode_timer = FALSE;
-      discovery.device_state = WAIT_TIMER_EXPIRED;
+      discovery.device_state          = WAIT_TIMER_EXPIRED;
     }
   } break; /* end case (START_DISCOVERY_PROC) */
   case (WAIT_TIMER_EXPIRED): {
-    /* Verify if startTime check has to be done  since discovery procedure is
-     * ongoing */
+    /* Verify if startTime check has to be done  since discovery procedure
+     * is ongoing */
     if (discovery.check_disc_proc_timer == TRUE) {
       /* check startTime value */
       if (HAL_GetTick() - discovery.startTime > discovery_time) {
         discovery.check_disc_proc_timer = FALSE;
-        discovery.startTime = 0;
-        discovery.device_state = DO_TERMINATE_GAP_PROC;
+        discovery.startTime             = 0;
+        discovery.device_state          = DO_TERMINATE_GAP_PROC;
       } /* if (HAL_GetTick() - discovery.startTime > discovery_time) */
     }
-    /* Verify if startTime check has to be done  since discovery mode is ongoing
+    /* Verify if startTime check has to be done  since discovery mode is
+     * ongoing
      */
     else if (discovery.check_disc_mode_timer == TRUE) {
       /* check startTime value */
       if (HAL_GetTick() - discovery.startTime > discovery_time) {
         discovery.check_disc_mode_timer = FALSE;
-        discovery.startTime = 0;
+        discovery.startTime             = 0;
 
         /* Discovery mode is ongoing: set non discoverable mode */
         discovery.device_state = DO_NON_DISCOVERABLE_MODE;
 
-      }    /* else if (discovery.check_disc_mode_timer == TRUE) */
-    }      /* if ((discovery.check_disc_proc_timer == TRUE) */
+      } /* else if (discovery.check_disc_mode_timer == TRUE) */
+    } /* if ((discovery.check_disc_proc_timer == TRUE) */
   } break; /* end case (WAIT_TIMER_EXPIRED) */
 
   case (DO_NON_DISCOVERABLE_MODE): {
@@ -215,18 +219,18 @@ void Connection_StateMachine(void) {
     ret = hidSetDeviceDiscoverable(LIMITED_DISCOVERABLE_MODE, Local_Name_Length,
                                    local_name);
     /*ret = aci_gap_set_discoverable(ADV_DATA_TYPE, ADV_INTERV_MIN,
-       ADV_INTERV_MAX, PUBLIC_ADDR, NO_WHITE_LIST_USE, sizeof(local_name),
-       local_name, 0, NULL, 0x0, 0x0);*/
+   ADV_INTERV_MAX, PUBLIC_ADDR, NO_WHITE_LIST_USE, sizeof(local_name),
+   local_name, 0, NULL, 0x0, 0x0);*/
 
     if (ret != BLE_STATUS_SUCCESS) {
       BLUENRG_PRINTF("Error in hidSetDeviceDiscoverable() 0x%02x\n", ret);
       discovery.device_state = DISCOVERY_ERROR;
     } else {
       BLUENRG_PRINTF("aci_gap_set_discoverable() OK\r\n");
-      discovery.startTime = HAL_GetTick();
+      discovery.startTime             = HAL_GetTick();
       discovery.check_disc_mode_timer = TRUE;
       discovery.check_disc_proc_timer = FALSE;
-      discovery.device_state = WAIT_TIMER_EXPIRED;
+      discovery.device_state          = WAIT_TIMER_EXPIRED;
     }
   } break; /* end case (ENTER_DISCOVERY_MODE) */
   case (DISCOVERY_ERROR): {
@@ -267,7 +271,8 @@ uint8_t hidSetDeviceDiscoverable(uint8_t mode, uint8_t nameLen, uint8_t *name) {
         (ADV_INTERVAL_MAX_MS * 1000) / 625, STATIC_RANDOM_ADDR,
         NO_WHITE_LIST_USE, nameLen, name, advtServUUIDlen, advtServUUID, 0, 0);
     if (ret != BLE_STATUS_SUCCESS) {
-      // BLUENRG_PRINTF("aci_gap_set_discoverable() failed: 0x%02x\r\n",ret);
+      // BLUENRG_PRINTF("aci_gap_set_discoverable() failed:
+      // 0x%02x\r\n",ret);
     } else {
       BLUENRG_PRINTF("aci_gap_set_discoverable() GENERAL--> SUCCESS\r\n");
     }
@@ -289,13 +294,13 @@ void receiveData(uint8_t *data_buffer, uint8_t Nb_bytes) {
 void Reset_DiscoveryContext(void) {
   discovery.check_disc_proc_timer = FALSE;
   discovery.check_disc_mode_timer = FALSE;
-  discovery.is_device_found = FALSE;
-  discovery.do_connect = FALSE;
-  discovery.startTime = 0;
-  discovery.device_state = INIT_STATE;
+  discovery.is_device_found       = FALSE;
+  discovery.do_connect            = FALSE;
+  discovery.startTime             = 0;
+  discovery.device_state          = INIT_STATE;
   BLUENRG_memset(&discovery.device_found_address[0], 0, 6);
-  device_role = 0xFF;
-  mtu_exchanged = 0;
+  device_role        = 0xFF;
+  mtu_exchanged      = 0;
   mtu_exchanged_wait = 0;
-  write_char_len = CHAR_VALUE_LENGTH - 3;
+  write_char_len     = CHAR_VALUE_LENGTH - 3;
 }

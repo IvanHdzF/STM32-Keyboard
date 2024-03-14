@@ -9,10 +9,9 @@
 #include "cmsis_os2.h"
 #include "main.h"
 
-
 UART_HandleTypeDef *SM_uart_Port;
 
-SM_Status currentState;
+SM_Status        currentState;
 osEventFlagsId_t flagsId;
 
 osThreadId_t threadId;
@@ -31,7 +30,6 @@ void (*stateActions[3])(void) = {handleSM_NORMAL, handleSM_IDLE,
                                  handleSM_SLEEP};
 
 void SM_Init(UART_HandleTypeDef *huart) {
-
   SM_uart_Port = huart;
   currentState = SM_NORMAL;
 
@@ -50,14 +48,14 @@ void SM_Init(UART_HandleTypeDef *huart) {
 
 // Main state machine execution loop
 void runStateMachine(void *argument) {
-
   while (1) {
     osEventFlagsWait(flagsId, 0x11U, osFlagsWaitAny, osWaitForever);
     osDelay(10U);
     Event event = 0;
     osDelay(10U);
 
-    // HAL_UART_Transmit(SM_uart_Port, setMssg, sizeof(setMssg), HAL_MAX_DELAY);
+    // HAL_UART_Transmit(SM_uart_Port, setMssg, sizeof(setMssg),
+    // HAL_MAX_DELAY);
     switch (eventFlags) {
     case 0x00000001U:
       event = SM_NORMAL;
