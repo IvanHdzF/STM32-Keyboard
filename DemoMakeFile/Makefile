@@ -29,7 +29,7 @@ INCLUDE_DIRS := \
     Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4
 
 ifeq ($(PLATFORM),Windows_NT)
-    BUILD_SYSTEM ?= MinGW Makefiles
+    BUILD_SYSTEM ?= MSYS Makefiles
 else
     ifeq ($(PLATFORM),Linux)
         BUILD_SYSTEM ?= Unix Makefiles
