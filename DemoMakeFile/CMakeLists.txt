@@ -1,6 +1,7 @@
 # STM32 Minimal CMake project for C/C++ projects
-cmake_minimum_required(VERSION 3.12)
+cmake_minimum_required(VERSION 3.14)
 ###############################################################################
+#add_subdirectory(Tests)
 
 include(./gcc-arm-none-eabi.cmake)
 
@@ -42,6 +43,10 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES ${CMAKE_CXX_IMPLICIT_INCLUDE_DIRECTORIES})
 set(CMAKE_CXX_EXTENSIONS ON)
+###############################################################################
+
+
+
 ###############################################################################
 
 set(STM32CUBEMX_INCLUDE_DIRECTORIES
@@ -131,3 +136,9 @@ if (${DUMP_ASM})
     add_custom_command(TARGET ${EXECUTABLE} POST_BUILD
         COMMAND ${CMAKE_OBJDUMP} -D -C $<TARGET_FILE:${EXECUTABLE}> > ${EXECUTABLE}.s)
 endif()
+
+###############################################################################
+
+
+
+

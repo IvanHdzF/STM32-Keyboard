@@ -1,4 +1,4 @@
-.PHONY: all build build-container cmake format format-linux flash-stlink flash-jlink format-container shell image build-container clean clean-image clean-all
+.PHONY: all build cmake format tidy check doc tests cmake-tests help flash-st flash-jlink clean clean-tests
 ############################### Native Makefile ###############################
 
 PROJECT_NAME ?= firmware
@@ -13,6 +13,20 @@ ifneq ($(DEBUG),0)
 C_FLAGS         += -DBLE2_DEBUG
 C_FLAGS         += -DBLUENRG2_DEBUG
 endif
+
+INCLUDE_DIRS := \
+    BlueNRG-2/Target \
+    Core/Inc \
+    Drivers/CMSIS/Device/ST/STM32F4xx/Include \
+    Drivers/CMSIS/Include \
+    Drivers/STM32F4xx_HAL_Driver/Inc \
+    Drivers/STM32F4xx_HAL_Driver/Inc/Legacy \
+    Middlewares/ST/BlueNRG-2/hci/hci_tl_patterns/Basic \
+    Middlewares/ST/BlueNRG-2/includes \
+    Middlewares/ST/BlueNRG-2/utils \
+    Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2 \
+    Middlewares/Third_Party/FreeRTOS/Source/include \
+    Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4
 
 ifeq ($(PLATFORM),Windows_NT)
     BUILD_SYSTEM ?= MinGW Makefiles
@@ -29,7 +43,6 @@ all: build
 
 build: cmake
 	$(MAKE) -C $(BUILD_DIR) --no-print-directory
-	@echo Flags are: $(C_FLAGS)
 
 cmake: $(BUILD_DIR)/Makefile
 
@@ -46,6 +59,27 @@ SRCS := $(shell find Core -name '*.[ch]' -or -name '*.[ch]pp')
 format: $(addsuffix .format,$(SRCS))
 %.format: %
 	clang-format -i -style=file $<
+
+tidy: $(addsuffix .tidy,$(SRCS))
+	
+%.tidy: %
+	{ clang-tidy -p build -quiet $(foreach dir,$(INCLUDE_DIRS),-extra-arg=-I$(dir)) $<; } > Results/$(shell basename $<).txt
+	@echo Writing log file to: Results/$(shell basename $<).txt
+
+check: 
+	cppcheck --enable=all Core 2> Results/cppcheck_analysis.txt
+
+doc: 
+	cd Docs; doxygen
+
+tests: cmake-tests
+	$(MAKE) -C Tests/googletest --no-print-directory
+	cd Tests/googletest && ctest
+
+cmake-tests: Tests/googletest/Makefile
+
+Tests/googletest/Makefile: CMakeLists.txt
+	cmake -S Tests -B Tests/googletest
 
 help:
 	@echo BT KBd documentation:
@@ -68,4 +102,7 @@ flash-jlink: build | $(BUILD_DIR)/jlink-script
 
 clean:
 	rm -rf $(BUILD_DIR)
+
+clean-tests:
+	rm -rf Tests/googletest
 
